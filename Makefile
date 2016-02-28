@@ -1,7 +1,7 @@
 CC ?= gcc
 CFLAGS_common ?= -Wall -std=gnu99
 CFLAGS_orig = -O0
-CFLAGS_opt  = -O0
+CFLAGS_opt  = -O0 -g
 
 EXEC = phonebook_orig phonebook_opt
 all: $(EXEC)
@@ -22,13 +22,32 @@ run: $(EXEC)
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	watch -d -t "./phonebook_orig && echo 3 | sudo tee /proc/sys/vm/drop_caches"
 
+run1: $(EXEC)
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
+	watch -d -t "./phonebook_opt && echo 3 | sudo tee /proc/sys/vm/drop_caches"
+
 cache-test: $(EXEC)
-	perf stat --repeat 100 \
+	sudo sh -c " echo 0 > /proc/sys/kernel/kptr_restrict"
+	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	sudo perf stat --repeat 100 \
 		-e cache-misses,cache-references,instructions,cycles \
-		./phonebook_orig
-	perf stat --repeat 100 \
+		./phonebook_orig 1>/dev/null
+	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	sudo perf stat --repeat 100 \
 		-e cache-misses,cache-references,instructions,cycles \
-		./phonebook_opt
+		./phonebook_opt 1>/dev/null
+
+report: $(EXEC)
+	sudo sh -c " echo 0 > /proc/sys/kernel/kptr_restrict"
+	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	sudo perf record -F 12500 \
+		-e cache-misses,cache-references,instructions,cycles \
+		-o perf.orig ./phonebook_orig
+	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	sudo perf record -F 12500 \
+		-e cache-misses,cache-references,instructions,cycles \
+		-o perf.opt ./phonebook_opt
+#	sudo perf report -i pref.opt
 
 output.txt: cache-test calculate
 	./calculate
