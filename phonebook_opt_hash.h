@@ -5,7 +5,7 @@
 
 /* TODO: After modifying the original version, uncomment the following
  * line to set OPT properly */
-#define OPT 1
+#define HASH 1
 typedef struct node_s {
     char firstName[16];
     char email[16];
@@ -24,6 +24,23 @@ typedef struct __PHONE_BOOK_ENTRY {
     struct __PHONE_BOOK_ENTRY *pNext;
 } entry;
 
+typedef struct hashEntry_s {
+    int hit;
+    unsigned int key;
+    char lastName[MAX_LAST_NAME_SIZE];
+    int count;
+    struct hashEntry_s *pHead;
+    struct hashEntry_s *pNext;
+} hashEntry_t;
+
+#define HASH_TABLE_BUCKET 42737
+
+typedef struct hashTable_s {
+    unsigned int key;
+    hashEntry_t hashEntry[HASH_TABLE_BUCKET];
+} hashTable_t;
+
 entry *findName(char lastName[], entry *pHead);
 entry *append(char lastName[], entry *e);
+
 #endif

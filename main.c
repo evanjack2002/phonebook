@@ -11,7 +11,7 @@
 static double diff_in_second(struct timespec t1, struct timespec t2)
 {
     struct timespec diff;
-    if (t2.tv_nsec-t1.tv_nsec < 0) {
+    if (t2.tv_nsec - t1.tv_nsec < 0) {
         diff.tv_sec  = t2.tv_sec - t1.tv_sec - 1;
         diff.tv_nsec = t2.tv_nsec - t1.tv_nsec + 1000000000;
     } else {
@@ -19,6 +19,32 @@ static double diff_in_second(struct timespec t1, struct timespec t2)
         diff.tv_nsec = t2.tv_nsec - t1.tv_nsec;
     }
     return (diff.tv_sec + diff.tv_nsec / 1000000000.0);
+}
+
+void test(entry *pHead)
+{
+    char test[8][MAX_LAST_NAME_SIZE] = {
+        "uninvolved",
+        "zyxel",
+        "whiteshank",
+        "odontomous",
+        "pungoteague",
+        "reweighted",
+        "xiphisternal",
+        "yakattalo"
+    };
+
+    entry *e;
+    for (int i = 0; i < 8; i++) {
+        e = findName(test[i], pHead);
+        if (e)
+            printf("Found ---> input=(%s), lastName=(%s)\n",
+                   test[i],
+                   e->lastName);
+        else
+            printf("Not Found ---> input=(%s)\n",
+                   test[i]);
+    }
 }
 
 int main(int argc, char *argv[])
@@ -29,12 +55,21 @@ int main(int argc, char *argv[])
     struct timespec start, end;
     double cpu_time1, cpu_time2;
 
+#if 1
+    struct timespec start1, end1;
+    double cpu_time3;
+#endif
+
     /* check file opening */
     fp = fopen(DICT_FILE, "r");
     if (fp == NULL) {
         printf("cannot open the file\n");
         return -1;
     }
+
+#if 1
+    clock_gettime(CLOCK_REALTIME, &start1);
+#endif
 
     /* build the entry */
     entry *pHead, *e;
@@ -82,17 +117,29 @@ int main(int argc, char *argv[])
     FILE *output;
 #if defined(OPT)
     output = fopen("opt.txt", "a");
+#elif defined(HASH)
+    output = fopen("opt_hash.txt", "a");
 #else
     output = fopen("orig.txt", "a");
 #endif
     fprintf(output, "append() findName() %lf %lf\n", cpu_time1, cpu_time2);
     fclose(output);
 
+#if 1
+    test(pHead);
+#endif
+
     printf("execution time of append() : %lf sec\n", cpu_time1);
     printf("execution time of findName() : %lf sec\n", cpu_time2);
 
     if (pHead->pNext) free(pHead->pNext);
     free(pHead);
+
+#if 1
+    clock_gettime(CLOCK_REALTIME, &end1);
+    cpu_time3 = diff_in_second(start1, end1);
+    printf("execution time of total : %lf sec\n", cpu_time3);
+#endif
 
     return 0;
 }
