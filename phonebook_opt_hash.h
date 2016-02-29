@@ -27,12 +27,13 @@ typedef struct __PHONE_BOOK_ENTRY {
 
 typedef struct hashEntry_s {
     unsigned int key;
-    unsigned int count;
+    unsigned int slot;
     entry *pHead;
     entry *pTail;
 } hashEntry_t;
 
-#define HASH_TABLE_BUCKET 42737
+//#define HASH_TABLE_BUCKET 42737
+#define HASH_TABLE_BUCKET 1000
 
 typedef struct hashTable_s {
     hashEntry_t hashEntry[HASH_TABLE_BUCKET];

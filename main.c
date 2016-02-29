@@ -38,11 +38,13 @@ void test(entry *pHead)
     entry *e;
     for (int i = 0; i < 9; i++) {
         e = findName(test[i], pHead);
-        if (e)
+        if (e) {
+#if 1
             printf("Found ---> input=(%s), lastName=(%s)\n",
                    test[i],
                    e->lastName);
-        else
+#endif
+        } else
             printf("Not Found ---> input=(%s)\n",
                    test[i]);
     }

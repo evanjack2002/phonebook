@@ -52,16 +52,16 @@ entry *findName(char lastName[], entry *pHead)
     hash = &(hashTable.hashEntry[key]);
 
 #ifdef DEBUG1
-    int index = 0;
+    unsigned int index = 0;
 #endif
 
     e = hash->pHead;
     while (e != NULL) {
         if (strcasecmp(lastName, e->lastName) == 0) {
 #ifdef DEBUG1
-            printf("TableSize=%d, count=%d, lastName=(%s), index=%d, (%s)\n",
+            printf("bucket=%u, slot=%u, input=(%s), slot_index=%u, value=(%s)\n",
                    hashTable.tableSize,
-                   hash->count,
+                   hash->slot,
                    lastName,
                    index,
                    e->lastName);
@@ -83,17 +83,17 @@ entry *append(char lastName[], entry *e)
 
     key = nameToKey(lastName, &hashTable);
     hash = &(hashTable.hashEntry[key]);
-    if (hash->pHead == NULL) {
-        hash->pHead = (entry *) malloc(sizeof(entry));
-        e = hash->pHead;
-    } else {
+    if (hash->pHead != NULL) {
         e = hash->pTail;
         e->pNext = (entry *) malloc(sizeof(entry));
         e = e->pNext;
+    } else {
+        hash->pHead = (entry *) malloc(sizeof(entry));
+        e = hash->pHead;
     }
     strcpy(e->lastName, lastName);
     e->pNext = NULL;
-    hash->count++;
+    hash->slot++;
     hash->pTail = e;
     return e;
 }
