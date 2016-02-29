@@ -39,7 +39,7 @@ void test(entry *pHead)
     for (int i = 0; i < 9; i++) {
         e = findName(test[i], pHead);
         if (e) {
-#if 1
+#if 0
             printf("Found ---> input=(%s), lastName=(%s)\n",
                    test[i],
                    e->lastName);
@@ -146,8 +146,8 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
     clock_gettime(CLOCK_REALTIME, &end1);
     cpu_time3 = diff_in_second(start1, end1);
-    printf("execution time of total : %lf sec\n", cpu_time3);
     printf("execution time of test() : %lf sec\n", cpu_time4);
+    printf("execution time of total : %lf sec\n", cpu_time3);
 #endif
 
     return 0;

@@ -1,7 +1,7 @@
 CC ?= gcc
 CFLAGS_common ?= -Wall -std=gnu99 -DDEBUG
 CFLAGS_orig = -O0
-CFLAGS_opt  = -O0 -g -DHASH_1
+CFLAGS_opt  = -O0 -g -DHASH_2
 
 EXEC = phonebook_orig phonebook_opt phonebook_opt_hash
 all: $(EXEC)

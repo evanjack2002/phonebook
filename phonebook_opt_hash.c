@@ -88,8 +88,8 @@ entry *append(char lastName[], entry *e)
         e->pNext = (entry *) malloc(sizeof(entry));
         e = e->pNext;
     } else {
-        hash->pHead = (entry *) malloc(sizeof(entry));
-        e = hash->pHead;
+        e = hash->pHead = (entry *) malloc(sizeof(entry));
+//        e = hash->pHead;
     }
     strcpy(e->lastName, lastName);
     e->pNext = NULL;

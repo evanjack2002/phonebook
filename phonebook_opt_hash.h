@@ -33,7 +33,7 @@ typedef struct hashEntry_s {
 } hashEntry_t;
 
 //#define HASH_TABLE_BUCKET 42737
-#define HASH_TABLE_BUCKET 1000
+#define HASH_TABLE_BUCKET 7919
 
 typedef struct hashTable_s {
     hashEntry_t hashEntry[HASH_TABLE_BUCKET];
