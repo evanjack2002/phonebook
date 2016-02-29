@@ -10,7 +10,6 @@ entry *findName(char lastName[], entry *pHead)
     /* TODO: implement */
     while (pHead != NULL) {
         if (strcasecmp(lastName, pHead->lastName) == 0) {
-            pHead->pNode = (node_t *)malloc(sizeof(node_t));
             return pHead;
         }
         pHead = pHead->pNext;

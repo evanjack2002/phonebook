@@ -23,7 +23,7 @@ static double diff_in_second(struct timespec t1, struct timespec t2)
 
 void test(entry *pHead)
 {
-    char test[8][MAX_LAST_NAME_SIZE] = {
+    char test[9][MAX_LAST_NAME_SIZE] = {
         "uninvolved",
         "zyxel",
         "whiteshank",
@@ -31,11 +31,12 @@ void test(entry *pHead)
         "pungoteague",
         "reweighted",
         "xiphisternal",
+        "aaaaah",
         "yakattalo"
     };
 
     entry *e;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         e = findName(test[i], pHead);
         if (e)
             printf("Found ---> input=(%s), lastName=(%s)\n",
@@ -55,9 +56,11 @@ int main(int argc, char *argv[])
     struct timespec start, end;
     double cpu_time1, cpu_time2;
 
-#if 1
+#ifdef DEBUG
     struct timespec start1, end1;
-    double cpu_time3;
+    struct timespec start2, end2;
+    double cpu_time3, cpu_time4;
+    clock_gettime(CLOCK_REALTIME, &start1);
 #endif
 
     /* check file opening */
@@ -67,8 +70,8 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-#if 1
-    clock_gettime(CLOCK_REALTIME, &start1);
+#if defined(HASH)
+    initHashTable();
 #endif
 
     /* build the entry */
@@ -125,8 +128,11 @@ int main(int argc, char *argv[])
     fprintf(output, "append() findName() %lf %lf\n", cpu_time1, cpu_time2);
     fclose(output);
 
-#if 1
+#ifdef DEBUG
+    clock_gettime(CLOCK_REALTIME, &start2);
     test(pHead);
+    clock_gettime(CLOCK_REALTIME, &end2);
+    cpu_time4 = diff_in_second(start2, end2);
 #endif
 
     printf("execution time of append() : %lf sec\n", cpu_time1);
@@ -135,10 +141,11 @@ int main(int argc, char *argv[])
     if (pHead->pNext) free(pHead->pNext);
     free(pHead);
 
-#if 1
+#ifdef DEBUG
     clock_gettime(CLOCK_REALTIME, &end1);
     cpu_time3 = diff_in_second(start1, end1);
     printf("execution time of total : %lf sec\n", cpu_time3);
+    printf("execution time of test() : %lf sec\n", cpu_time4);
 #endif
 
     return 0;

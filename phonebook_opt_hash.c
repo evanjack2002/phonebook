@@ -8,84 +8,92 @@
 
 hashTable_t hashTable;
 
-int hash1(char *key)
+void initHashTable()
+{
+    memset(&hashTable, 0, sizeof(hashTable_t));
+    hashTable.tableSize = HASH_TABLE_BUCKET;
+}
+
+#ifdef HASH_2
+unsigned int hash2(char *key, hashTable_t *ht)
+{
+    unsigned int hashVal = 0;
+    while (*key != '\0') {
+        hashVal = (hashVal << 5) + *key++;
+    }
+    return hashVal % ht->tableSize;
+}
+#else
+unsigned int hash1(char *key, hashTable_t *ht)
 {
     unsigned int hashVal = 0;
     while (*key != '\0') {
         hashVal += *key++;
     }
-    return hashVal & HASH_TABLE_BUCKET;
+    return hashVal % ht->tableSize;
 }
+#endif
 
-hashEntry_t *appendHashTable(char lastName[], int index, int count,
-                             hashEntry_t *h, hashEntry_t *n)
-{
-    hashEntry_t *e;
-    e = (hashEntry_t *) malloc(sizeof(hashEntry_t));
-    strcpy(e->lastName, lastName);
-    e->key = index;
-    e->count = count;
-    e->pNext = NULL;
-    n->pNext = e;
-    return e;
-}
-
-hashEntry_t *findTable(char *lastName)
-{
-    unsigned int index;
-    hashEntry_t *e, *pHead;
-
-    index = hash1(lastName);
-    e = &(hashTable.hashEntry[index]);
-
-    pHead = e->pHead;
-    while (pHead != NULL) {
-        if (strcasecmp(lastName, pHead->lastName) == 0) {
-            return pHead;
-        }
-        pHead = pHead->pNext;
-    }
-    return NULL;
-}
-
-int addTable(char *lastName)
-{
-    unsigned int index;
-    hashEntry_t *e;
-
-    index = hash1(lastName);
-    e = &(hashTable.hashEntry[index]);
-    if (e->hit == 0) {
-        e->key = index;
-        e->pHead = malloc(sizeof(hashEntry_t));
-        e->pHead->pNext = NULL;
-        e->pNext = e->pHead;
-        strcpy(e->pHead->lastName, lastName);
-        e->hit = 1;
-        e->count = 0;
-    } else {
-        e->count++;
-        e->pNext = appendHashTable(lastName, index, e->count, e->pHead, e->pNext);
-    }
-    return 0;
-}
+#ifdef HASH_2
+#define nameToKey(k, h) hash2(k, h)
+#elif HASH_1
+#define nameToKey(k, h) hash1(k, h)
+#else
+#define nameToKey(k, h) hash1(k, h)
+#endif
 
 entry *findName(char lastName[], entry *pHead)
 {
-    /* TODO: implement */
-    hashEntry_t *e;
-    e = findTable(lastName);
+    unsigned int key;
+    hashEntry_t *hash;
+    entry *e ;
 
-    if (e) {
-        strcpy(pHead->lastName, e->lastName);
-        return pHead;
+    key = nameToKey(lastName, &hashTable);
+    hash = &(hashTable.hashEntry[key]);
+
+#ifdef DEBUG1
+    int index = 0;
+#endif
+
+    e = hash->pHead;
+    while (e != NULL) {
+        if (strcasecmp(lastName, e->lastName) == 0) {
+#ifdef DEBUG1
+            printf("TableSize=%d, count=%d, lastName=(%s), index=%d, (%s)\n",
+                   hashTable.tableSize,
+                   hash->count,
+                   lastName,
+                   index,
+                   e->lastName);
+#endif
+            return e;
+        }
+        e = e->pNext;
+#ifdef DEBUG1
+        index++;
+#endif
     }
     return NULL;
 }
 
 entry *append(char lastName[], entry *e)
 {
-    /* allocate memory for the new entry and put lastName */
-    addTable(lastName);
+    unsigned int key;
+    hashEntry_t *hash;
+
+    key = nameToKey(lastName, &hashTable);
+    hash = &(hashTable.hashEntry[key]);
+    if (hash->pHead == NULL) {
+        hash->pHead = (entry *) malloc(sizeof(entry));
+        e = hash->pHead;
+    } else {
+        e = hash->pTail;
+        e->pNext = (entry *) malloc(sizeof(entry));
+        e = e->pNext;
+    }
+    strcpy(e->lastName, lastName);
+    e->pNext = NULL;
+    hash->count++;
+    hash->pTail = e;
     return e;
 }
