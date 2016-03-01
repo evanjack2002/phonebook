@@ -48,7 +48,6 @@ entry *findName(char lastName[], entry *e)
 {
     unsigned int key;
     hashEntry_t *hash;
-//    entry *e ;
 
 #ifdef DEBUG1
     unsigned int index = 0;
@@ -65,9 +64,7 @@ entry *findName(char lastName[], entry *e)
     while (e != NULL) {
         if (strcasecmp(lastName, e->lastName) == 0) {
 #ifdef DEBUG1
-            printf("hashEntry_t=%lu, hashTable_t=%lu, bucket=%u, bucktUse=%u, slot=%u, input=(%s), key=%u, slot_index=%u, value=(%s)\n",
-                   sizeof(hashEntry_t),
-                   sizeof(hashTable_t),
+            printf("bucket=%u, bucktUse=%u, slot=%u, input=(%s), key=%u, slot_index=%u, value=(%s)\n",
                    hashTable.tableSize,
                    hashTable.bucketSize,
                    hash->slot,
@@ -91,15 +88,14 @@ entry *append(char lastName[], entry *e)
     unsigned int key;
     hashEntry_t *hash;
 
+    e = (entry *) malloc(sizeof(entry));
+    e->pNext =NULL;
     key = nameToKey(lastName, &hashTable);
 #ifdef E_TEST_1
     hash = &(hashTable.hashEntry[key]);
 #else
-    hash = (hashTable.pEntry) + key;
+    hash = ((hashTable.pEntry) + key);
 #endif
-
-    e = (entry *) malloc(sizeof(entry));
-    e->pNext =NULL;
     strcpy(e->lastName, lastName);
     if (hash->pHead == NULL) {
         hash->pHead = e;
@@ -108,7 +104,9 @@ entry *append(char lastName[], entry *e)
         hash->pTail->pNext = e;
     }
     hash->pTail = e;
+#ifdef DEBUG1
     hash->key = key;
     hash->slot++;
+#endif
     return e;
 }
