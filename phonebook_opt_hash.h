@@ -5,7 +5,14 @@
 
 /* TODO: After modifying the original version, uncomment the following
  * line to set OPT properly */
-#define HASH 1
+
+#ifdef HASH_1
+#define HASH1 1
+#endif
+
+#ifdef HASH_2
+#define HASH2 1
+#endif
 
 typedef struct phoneBook_s {
     char firstName[16];
@@ -32,11 +39,16 @@ typedef struct hashEntry_s {
     entry *pTail;
 } hashEntry_t;
 
-//#define HASH_TABLE_BUCKET 42737
+#if 1
+#define HASH_TABLE_BUCKET 42737
+#else
 #define HASH_TABLE_BUCKET 7919
+#endif
 
 typedef struct hashTable_s {
-    hashEntry_t hashEntry[HASH_TABLE_BUCKET];
+//    hashEntry_t hashEntry[HASH_TABLE_BUCKET];
+    hashEntry_t *pEntry;
+    unsigned int bucketSize;
     unsigned int tableSize;
 } hashTable_t;
 

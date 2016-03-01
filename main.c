@@ -39,7 +39,7 @@ void test(entry *pHead)
     for (int i = 0; i < 9; i++) {
         e = findName(test[i], pHead);
         if (e) {
-#if 0
+#if 1
             printf("Found ---> input=(%s), lastName=(%s)\n",
                    test[i],
                    e->lastName);
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-#if defined(HASH)
+#if defined(HASH1) || defined(HASH2)
     initHashTable();
 #endif
 
@@ -122,8 +122,10 @@ int main(int argc, char *argv[])
     FILE *output;
 #if defined(OPT)
     output = fopen("opt.txt", "a");
-#elif defined(HASH)
-    output = fopen("opt_hash.txt", "a");
+#elif defined(HASH1)
+    output = fopen("opt_hash1.txt", "a");
+#elif defined(HASH2)
+    output = fopen("opt_hash2.txt", "a");
 #else
     output = fopen("orig.txt", "a");
 #endif
