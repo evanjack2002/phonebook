@@ -9,8 +9,11 @@
 hashTable_t hashTable;
 void initHashTable()
 {
+#ifdef E_TEST_1
+    memset(&hashTable, 0, sizeof(hashTable_t));
+#else
     hashTable.pEntry = malloc(sizeof(hashEntry_t) * HASH_TABLE_BUCKET);
-//    memset(&hashTable, 0, sizeof(hashTable_t));
+#endif
     hashTable.tableSize = HASH_TABLE_BUCKET;
     hashTable.bucketSize = 0;
 }
@@ -52,8 +55,11 @@ entry *findName(char lastName[], entry *e)
 #endif
 
     key = nameToKey(lastName, &hashTable);
-//    hash = &(hashTable.hashEntry[key]);
+#ifdef E_TEST_1
+    hash = &(hashTable.hashEntry[key]);
+#else
     hash = (hashTable.pEntry) + key;
+#endif
 
     e = hash->pHead;
     while (e != NULL) {
@@ -86,8 +92,11 @@ entry *append(char lastName[], entry *e)
     hashEntry_t *hash;
 
     key = nameToKey(lastName, &hashTable);
-
+#ifdef E_TEST_1
+    hash = &(hashTable.hashEntry[key]);
+#else
     hash = (hashTable.pEntry) + key;
+#endif
 
     e = (entry *) malloc(sizeof(entry));
     e->pNext =NULL;

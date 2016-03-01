@@ -46,8 +46,11 @@ typedef struct hashEntry_s {
 #endif
 
 typedef struct hashTable_s {
-//    hashEntry_t hashEntry[HASH_TABLE_BUCKET];
+#ifdef E_TEST_1
+    hashEntry_t hashEntry[HASH_TABLE_BUCKET];
+#else
     hashEntry_t *pEntry;
+#endif
     unsigned int bucketSize;
     unsigned int tableSize;
 } hashTable_t;
