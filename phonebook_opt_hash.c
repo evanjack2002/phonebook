@@ -64,14 +64,15 @@ entry *findName(char lastName[], entry *e)
     while (e != NULL) {
         if (strcasecmp(lastName, e->lastName) == 0) {
 #ifdef DEBUG1
-            printf("bucket=%u, bucktUse=%u, slot=%u, input=(%s), key=%u, slot_index=%u, value=(%s)\n",
+            printf("buckSize=%u, buckUse=%u, slotSize=%u, input=(%s:%u), key=%u, value=(%s), slotIndex=%u\n",
                    hashTable.tableSize,
                    hashTable.bucketSize,
                    hash->slot,
                    lastName,
                    key,
-                   index,
-                   e->lastName);
+                   hash->key,
+                   e->lastName,
+                   index);
 #endif
             return e;
         }
