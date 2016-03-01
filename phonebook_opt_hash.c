@@ -7,6 +7,7 @@
 /* FILL YOUR OWN IMPLEMENTATION HERE! */
 
 hashTable_t hashTable;
+
 void initHashTable()
 {
 #ifdef E_TEST_1
@@ -18,6 +19,14 @@ void initHashTable()
     hashTable.bucketSize = 0;
 }
 
+void freeHashTable()
+{
+#ifdef E_TEST_1
+#else
+    free(hashTable.pEntry);
+#endif
+}
+
 #ifdef HASH_1
 unsigned int hash1(char *key, hashTable_t *ht)
 {
@@ -27,7 +36,7 @@ unsigned int hash1(char *key, hashTable_t *ht)
     }
     return hashVal % ht->tableSize;
 }
-#define nameToKey(k, h) hash1(k, h)
+#define hashFunc(k, h) hash1(k, h)
 
 #elif HASH_2
 unsigned int hash2(char *key, hashTable_t *ht)
@@ -38,7 +47,7 @@ unsigned int hash2(char *key, hashTable_t *ht)
     }
     return hashVal % ht->tableSize;
 }
-#define nameToKey(k, h) hash2(k, h)
+#define hashFunc(k, h) hash2(k, h)
 
 #elif
 #error
@@ -46,14 +55,14 @@ unsigned int hash2(char *key, hashTable_t *ht)
 
 entry *findName(char lastName[], entry *e)
 {
-    unsigned int key;
+    unsigned int key = 0;
     hashEntry_t *hash;
 
 #ifdef DEBUG1
     unsigned int index = 0;
 #endif
 
-    key = nameToKey(lastName, &hashTable);
+    key = hashFunc(lastName, &hashTable);
 #ifdef E_TEST_1
     hash = &(hashTable.hashEntry[key]);
 #else
@@ -64,7 +73,7 @@ entry *findName(char lastName[], entry *e)
     while (e != NULL) {
         if (strcasecmp(lastName, e->lastName) == 0) {
 #ifdef DEBUG1
-            printf("buckSize=%u, buckUse=%u, slotSize=%u, input=(%s:%u), key=%u, value=(%s), slotIndex=%u\n",
+            printf("bSize=%u, bUse=%u, sSize=%u, input=(%s:%u), key=%u, value=(%s), sIndex=%u\n",
                    hashTable.tableSize,
                    hashTable.bucketSize,
                    hash->slot,
@@ -86,12 +95,12 @@ entry *findName(char lastName[], entry *e)
 
 entry *append(char lastName[], entry *e)
 {
-    unsigned int key;
+    unsigned int key = 0;
     hashEntry_t *hash;
 
     e = (entry *) malloc(sizeof(entry));
-    e->pNext =NULL;
-    key = nameToKey(lastName, &hashTable);
+    e->pNext = NULL;
+    key = hashFunc(lastName, &hashTable);
 #ifdef E_TEST_1
     hash = &(hashTable.hashEntry[key]);
 #else
@@ -100,7 +109,9 @@ entry *append(char lastName[], entry *e)
     strcpy(e->lastName, lastName);
     if (hash->pHead == NULL) {
         hash->pHead = e;
+#ifdef DEBUG1
         hashTable.bucketSize++;
+#endif
     } else {
         hash->pTail->pNext = e;
     }

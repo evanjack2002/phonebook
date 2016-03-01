@@ -1,16 +1,16 @@
 CC ?= gcc
-CFLAGS_common ?= -Wall -std=gnu99 -DDEBUG
+CFLAGS_common ?= -Wall -std=gnu99 -g -DDEBUG
 CFLAGS_orig = -O0
-CFLAGS_opt  = -O0 -g
-CFLAGS_opt_hash1  = -O0 -g -DHASH_1 -DDEBUG1
-CFLAGS_opt_hash2  = -O0 -g -DHASH_2 -DDEBUG1
-
-SRC_HASH = phonebook_opt_hash
+CFLAGS_opt  = -O0
+CFLAGS_opt_hash1  = -O0 -DHASH_1 -DDEBUG1
+CFLAGS_opt_hash2  = -O0 -DHASH_2 -DDEBUG1
 
 EXEC = phonebook_orig phonebook_opt phonebook_opt_hash1 phonebook_opt_hash2
 all: $(EXEC)
 
 SRCS_common = main.c
+
+SRC_HASH = phonebook_opt_hash
 
 phonebook_orig: $(SRCS_common) phonebook_orig.c phonebook_orig.h
 	$(CC) $(CFLAGS_common) $(CFLAGS_orig) \
@@ -95,10 +95,13 @@ rpt_4: phonebook_opt_hash2 cc
 		-o perf.opt_hash2 ./phonebook_opt_hash2
 rpt: rpt_1 rpt_2 rpt_3 rpt_4
 
-test:
+test: test.c
 	$(CC) -pthread $(CFLAGS_common) $(CFLAGS_orig) \
 	-o $@ $@.c
-test1:
+test1: test1.c
+	$(CC) -pthread $(CFLAGS_common) $(CFLAGS_orig) \
+	-o $@ $@.c
+test2: test2.c
 	$(CC) -pthread $(CFLAGS_common) $(CFLAGS_orig) \
 	-o $@ $@.c
 
@@ -114,4 +117,4 @@ calculate: calculate.c
 .PHONY: clean
 clean:
 	$(RM) $(EXEC) *.o perf.* \
-		calculate orig.txt opt.txt opt_hash.txt output.txt runtime.png test test1
+		calculate orig.txt opt.txt opt_hash.txt output.txt runtime.png test test1 test2
