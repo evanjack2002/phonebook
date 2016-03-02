@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <pthread.h>
 
 #include "phonebook_opt_hash.h"
 
@@ -93,10 +94,14 @@ entry *findName(char lastName[], entry *e)
     return NULL;
 }
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 entry *append(char lastName[], entry *e)
 {
     unsigned int key = 0;
     hashEntry_t *hash;
+
+    pthread_mutex_lock(&mutex);
 
     e = (entry *) malloc(sizeof(entry));
     e->pNext = NULL;
@@ -120,5 +125,46 @@ entry *append(char lastName[], entry *e)
     hash->key = key;
     hash->slot++;
 #endif
+
+    pthread_mutex_unlock(&mutex);
+
     return e;
 }
+
+#ifdef THD
+void *processArray(void *args)
+{
+    thread_data_t *data = (thread_data_t *)args;
+    char **arr = data->arr;
+    int start = data->start;
+    int end   = data->end;
+    long total = data->total;
+    int i = 0;
+    entry *e = NULL;
+
+#if 0
+    printf("pthred_id=%lu, start=%d, end=%d, total=%lu\n",
+           pthread_self(),
+           start,
+           end,
+           total);
+#endif
+
+    // 1. Wait for a signal to start from the main thread
+    for (i = start; i < end; i++) {
+#if 1
+        if (strlen(&arr[i]) == 0)
+            printf("pthred_id=%lu, bSize=%d, slot=%d, arr[%d]=(%s))\n",
+                   pthread_self(),
+                   hashTable.bucketSize,
+                   (hashTable.pEntry + hashFunc(&arr[i], &hashTable))->slot,
+                   i,
+                   &arr[i]);
+#endif
+        e = append(&arr[i], e);
+    }
+
+    // 2. Signal to the main thread that you're done
+    pthread_exit(NULL);
+}
+#endif

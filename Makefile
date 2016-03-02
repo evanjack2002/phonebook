@@ -4,8 +4,9 @@ CFLAGS_orig = -O0
 CFLAGS_opt  = -O0
 CFLAGS_opt_hash1  = -O0 -DHASH_1 -DDEBUG1
 CFLAGS_opt_hash2  = -O0 -DHASH_2 -DDEBUG1
+CFLAGS_opt_thread  = -O0 -pthread -DHASH_2 -DTHD -DDEBUG1
 
-EXEC = phonebook_orig phonebook_opt phonebook_opt_hash1 phonebook_opt_hash2
+EXEC = phonebook_orig phonebook_opt phonebook_opt_hash1 phonebook_opt_hash2 phonebook_opt_thread
 all: $(EXEC)
 
 SRCS_common = main.c
@@ -26,8 +27,14 @@ phonebook_opt_hash1: $(SRCS_common) phonebook_opt_hash.c phonebook_opt_hash.h
 	$(CC) $(CFLAGS_common) $(CFLAGS_opt_hash1) \
 		-DIMPL="\"$(SRC_HASH).h\"" -o $@ \
 		$(SRCS_common) $(SRC_HASH).c
+
 phonebook_opt_hash2: $(SRCS_common) phonebook_opt_hash.c phonebook_opt_hash.h
 	$(CC) $(CFLAGS_common) $(CFLAGS_opt_hash2) \
+		-DIMPL="\"$(SRC_HASH).h\"" -o $@ \
+		$(SRCS_common) $(SRC_HASH).c
+
+phonebook_opt_thread: $(SRCS_common) phonebook_opt_hash.c phonebook_opt_hash.h
+	$(CC) $(CFLAGS_common) $(CFLAGS_opt_thread) \
 		-DIMPL="\"$(SRC_HASH).h\"" -o $@ \
 		$(SRCS_common) $(SRC_HASH).c
 

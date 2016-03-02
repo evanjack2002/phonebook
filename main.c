@@ -4,6 +4,10 @@
 #include <time.h>
 #include <assert.h>
 
+#ifdef THD
+#include <pthread.h>
+#endif
+
 #include IMPL
 
 #define DICT_FILE "./dictionary/words.txt"
@@ -58,6 +62,15 @@ int main(int argc, char *argv[])
     struct timespec start, end;
     double cpu_time1, cpu_time2;
 
+#ifdef THD
+    char buf[400000][MAX_LAST_NAME_SIZE];
+    int fileLine = 0;
+    pthread_t threads[NUM_OF_THREADS];
+    thread_data_t thread_data[NUM_OF_THREADS];
+    int remainingWork, amountOfWork;
+    int startRange, endRange = -1;
+#endif
+
 #ifdef DEBUG
     struct timespec start1, end1;
     struct timespec start2, end2;
@@ -87,6 +100,32 @@ int main(int argc, char *argv[])
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
 #endif
     clock_gettime(CLOCK_REALTIME, &start);
+#ifdef THD
+    while (fgets(&buf[fileLine][MAX_LAST_NAME_SIZE], MAX_LAST_NAME_SIZE, fp)) {
+        while (buf[fileLine][i] != '\0')
+            i++;
+        buf[fileLine][i - 1] = '\0';
+        i = 0;
+        fileLine++;
+    }
+
+    remainingWork = fileLine;
+    for (int i = 0; i < NUM_OF_THREADS; i++) {
+
+        amountOfWork = remainingWork / (NUM_OF_THREADS - i);
+        startRange = endRange + 1;
+        endRange   = startRange + amountOfWork;
+
+        thread_data[i].arr   = (char **)buf;
+        thread_data[i].start = startRange;
+        thread_data[i].end   = endRange;
+        thread_data[i].total   = fileLine;
+
+        pthread_create(&threads[i], NULL, processArray, (void *)&thread_data[i]);
+
+        remainingWork -= amountOfWork;
+    }
+#else
     while (fgets(line, sizeof(line), fp)) {
         while (line[i] != '\0')
             i++;
@@ -94,11 +133,19 @@ int main(int argc, char *argv[])
         i = 0;
         e = append(line, e);
     }
+#endif
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time1 = diff_in_second(start, end);
 
     /* close file as soon as possible */
     fclose(fp);
+
+#ifdef THD
+    sleep(10);
+    extern hashTable_t hashTable;
+    printf("hashtable=%d\n",
+           hashTable.bucketSize);
+#endif
 
     e = pHead;
 
