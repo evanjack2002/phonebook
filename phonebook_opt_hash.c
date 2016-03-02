@@ -1,7 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+#ifdef THD
 #include <pthread.h>
+#endif
 
 #include "phonebook_opt_hash.h"
 
@@ -94,14 +97,18 @@ entry *findName(char lastName[], entry *e)
     return NULL;
 }
 
+#ifdef THD
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 entry *append(char lastName[], entry *e)
 {
     unsigned int key = 0;
     hashEntry_t *hash;
 
+#ifdef THD
     pthread_mutex_lock(&mutex);
+#endif
 
     e = (entry *) malloc(sizeof(entry));
     e->pNext = NULL;
@@ -126,7 +133,9 @@ entry *append(char lastName[], entry *e)
     hash->slot++;
 #endif
 
+#ifdef THD
     pthread_mutex_unlock(&mutex);
+#endif
 
     return e;
 }
