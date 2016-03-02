@@ -17,7 +17,7 @@ char buf[400000][MAX_LAST_NAME_SIZE];
 //pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t r_mutex = PTHREAD_MUTEX_INITIALIZER;
 unsigned int running_threads = 0;
-#define NUM_OF_THREADS 10
+#define NUM_OF_THREADS 4
 #endif
 
 static double diff_in_second(struct timespec t1, struct timespec t2)
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
 #endif
 #ifdef THD
-    clock_gettime(CLOCK_REALTIME, &start_thd);
+    clock_gettime(CLOCK_REALTIME, &start);
     while (fgets(&(buf[s]), MAX_LAST_NAME_SIZE, fp)) {
         while (buf[s][i] != '\0')
             i++;
@@ -129,10 +129,10 @@ int main(int argc, char *argv[])
         startRange = endRange + 1;
         endRange   = startRange + amountOfWork;
 
-        thread_data[i].arr   = (char **)buf;
+//        thread_data[i].arr   = (char **)buf;
         thread_data[i].start = startRange;
         thread_data[i].end   = endRange;
-        thread_data[i].total = s;
+//        thread_data[i].total = s;
 
         pthread_mutex_lock(& r_mutex);
         running_threads++;
@@ -142,10 +142,14 @@ int main(int argc, char *argv[])
 
         remainingWork -= amountOfWork;
     }
+
     while (running_threads > 0)
         usleep(10);
-    clock_gettime(CLOCK_REALTIME, &end_thd);
-    cpu_time1 = cpu_time_thd = diff_in_second(start_thd, end_thd);
+
+    clock_gettime(CLOCK_REALTIME, &end);
+    cpu_time1 = diff_in_second(start, end);
+
+    cpu_time_thd = cpu_time_thd / NUM_OF_THREADS;
 #else
     clock_gettime(CLOCK_REALTIME, &start);
     while (fgets(line, sizeof(line), fp)) {
@@ -233,6 +237,8 @@ void *processArray(void *args)
     int i = 0;
     entry *e = NULL;
 
+    pthread_mutex_lock(& r_mutex);
+
 #if 0
     printf("pthred_id=%lu, start=%d, end=%d, total=%lu\n",
            pthread_self(),
@@ -242,6 +248,7 @@ void *processArray(void *args)
 #endif
 
     // 1. Wait for a signal to start from the main thread
+    clock_gettime(CLOCK_REALTIME, &start_thd);
     for (i = start; i < end; i++) {
 #if 0
 //        if (strlen(&buf[i]) == 0)
@@ -252,16 +259,16 @@ void *processArray(void *args)
                i,
                &(buf[i]));
 #endif
+
         e = append(&(buf[i]), e);
     }
+    clock_gettime(CLOCK_REALTIME, &end_thd);
+    cpu_time_thd += diff_in_second(start_thd, end_thd);
 
-    pthread_mutex_lock(& r_mutex);
     if (running_threads > 0)
         running_threads--;
-    pthread_mutex_unlock(& r_mutex);
 
-//    clock_gettime(CLOCK_REALTIME, &end_thd);
-//    cpu_time_thd += diff_in_second(start_thd, end_thd);
+    pthread_mutex_unlock(& r_mutex);
 
     // 2. Signal to the main thread that you're done
     pthread_exit(NULL);

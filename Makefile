@@ -59,23 +59,23 @@ run5: phonebook_opt_thread
 cache-test: $(EXEC)
 	@rm -f *.txt
 	sudo sh -c " echo 0 > /proc/sys/kernel/kptr_restrict"
-	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	perf stat --repeat 100 \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
 		./phonebook_orig 1>/dev/null
-	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	perf stat --repeat 100 \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
 		./phonebook_opt 1>/dev/null
-	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	perf stat --repeat 100 \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
 		./phonebook_opt_hash1 1>/dev/null
-	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	perf stat --repeat 100 \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
 		./phonebook_opt_hash2 1>/dev/null
-	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	perf stat --repeat 100 \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
 		./phonebook_opt_thread 1>/dev/null
