@@ -15,16 +15,12 @@
 #endif
 
 #ifdef THD
-#define NUM_OF_THREADS 1000
-
 typedef struct thread_data_s {
     int start;
     int end;
     long total;
     char **arr;
 } thread_data_t;
-
-void print(int *ints, int n);
 void *processArray(void *args);
 #endif
 

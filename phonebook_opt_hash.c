@@ -12,6 +12,13 @@
 
 hashTable_t hashTable;
 
+#ifdef THD
+extern char buf[400000][MAX_LAST_NAME_SIZE];
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+extern pthread_mutex_t r_mutex;
+extern unsigned int running_threads;
+#endif
+
 void initHashTable()
 {
 #ifdef E_TEST_1
@@ -97,18 +104,10 @@ entry *findName(char lastName[], entry *e)
     return NULL;
 }
 
-#ifdef THD
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
 entry *append(char lastName[], entry *e)
 {
     unsigned int key = 0;
     hashEntry_t *hash;
-
-#ifdef THD
-    pthread_mutex_lock(&mutex);
-#endif
 
     e = (entry *) malloc(sizeof(entry));
     e->pNext = NULL;
@@ -119,6 +118,11 @@ entry *append(char lastName[], entry *e)
     hash = ((hashTable.pEntry) + key);
 #endif
     strcpy(e->lastName, lastName);
+
+#ifdef THD
+    pthread_mutex_lock(&mutex);
+#endif
+
     if (hash->pHead == NULL) {
         hash->pHead = e;
 #ifdef DEBUG1
@@ -139,41 +143,3 @@ entry *append(char lastName[], entry *e)
 
     return e;
 }
-
-#ifdef THD
-void *processArray(void *args)
-{
-    thread_data_t *data = (thread_data_t *)args;
-    char **arr = data->arr;
-    int start = data->start;
-    int end   = data->end;
-    long total = data->total;
-    int i = 0;
-    entry *e = NULL;
-
-#if 0
-    printf("pthred_id=%lu, start=%d, end=%d, total=%lu\n",
-           pthread_self(),
-           start,
-           end,
-           total);
-#endif
-
-    // 1. Wait for a signal to start from the main thread
-    for (i = start; i < end; i++) {
-#if 1
-        if (strlen(&arr[i]) == 0)
-            printf("pthred_id=%lu, bSize=%d, slot=%d, arr[%d]=(%s))\n",
-                   pthread_self(),
-                   hashTable.bucketSize,
-                   (hashTable.pEntry + hashFunc(&arr[i], &hashTable))->slot,
-                   i,
-                   &arr[i]);
-#endif
-        e = append(&arr[i], e);
-    }
-
-    // 2. Signal to the main thread that you're done
-    pthread_exit(NULL);
-}
-#endif

@@ -12,6 +12,14 @@
 
 #define DICT_FILE "./dictionary/words.txt"
 
+#ifdef THD
+char buf[400000][MAX_LAST_NAME_SIZE];
+//pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t r_mutex = PTHREAD_MUTEX_INITIALIZER;
+unsigned int running_threads = 0;
+#define NUM_OF_THREADS 10
+#endif
+
 static double diff_in_second(struct timespec t1, struct timespec t2)
 {
     struct timespec diff;
@@ -54,6 +62,11 @@ void test(entry *pHead)
     }
 }
 
+#ifdef THD
+struct timespec start_thd, end_thd;
+double cpu_time_thd;
+#endif
+
 int main(int argc, char *argv[])
 {
     FILE *fp;
@@ -63,8 +76,8 @@ int main(int argc, char *argv[])
     double cpu_time1, cpu_time2;
 
 #ifdef THD
-    char buf[400000][MAX_LAST_NAME_SIZE];
-    int fileLine = 0;
+//    char buf[400000][MAX_LAST_NAME_SIZE];
+    unsigned int s = 0;
     pthread_t threads[NUM_OF_THREADS];
     thread_data_t thread_data[NUM_OF_THREADS];
     int remainingWork, amountOfWork;
@@ -99,17 +112,17 @@ int main(int argc, char *argv[])
 #if defined(__GNUC__)
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
 #endif
-    clock_gettime(CLOCK_REALTIME, &start);
 #ifdef THD
-    while (fgets(&buf[fileLine][MAX_LAST_NAME_SIZE], MAX_LAST_NAME_SIZE, fp)) {
-        while (buf[fileLine][i] != '\0')
+    clock_gettime(CLOCK_REALTIME, &start_thd);
+    while (fgets(&(buf[s]), MAX_LAST_NAME_SIZE, fp)) {
+        while (buf[s][i] != '\0')
             i++;
-        buf[fileLine][i - 1] = '\0';
+        buf[s][i - 1] = '\0';
         i = 0;
-        fileLine++;
+        s++;
     }
 
-    remainingWork = fileLine;
+    remainingWork = s;
     for (int i = 0; i < NUM_OF_THREADS; i++) {
 
         amountOfWork = remainingWork / (NUM_OF_THREADS - i);
@@ -119,13 +132,22 @@ int main(int argc, char *argv[])
         thread_data[i].arr   = (char **)buf;
         thread_data[i].start = startRange;
         thread_data[i].end   = endRange;
-        thread_data[i].total   = fileLine;
+        thread_data[i].total = s;
+
+        pthread_mutex_lock(& r_mutex);
+        running_threads++;
+        pthread_mutex_unlock(& r_mutex);
 
         pthread_create(&threads[i], NULL, processArray, (void *)&thread_data[i]);
 
         remainingWork -= amountOfWork;
     }
+    while (running_threads > 0)
+        usleep(10);
+    clock_gettime(CLOCK_REALTIME, &end_thd);
+    cpu_time1 = cpu_time_thd = diff_in_second(start_thd, end_thd);
 #else
+    clock_gettime(CLOCK_REALTIME, &start);
     while (fgets(line, sizeof(line), fp)) {
         while (line[i] != '\0')
             i++;
@@ -133,19 +155,12 @@ int main(int argc, char *argv[])
         i = 0;
         e = append(line, e);
     }
-#endif
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time1 = diff_in_second(start, end);
+#endif
 
     /* close file as soon as possible */
     fclose(fp);
-
-#ifdef THD
-    sleep(10);
-    extern hashTable_t hashTable;
-    printf("hashtable=%d\n",
-           hashTable.bucketSize);
-#endif
 
     e = pHead;
 
@@ -169,6 +184,8 @@ int main(int argc, char *argv[])
     FILE *output;
 #if defined(OPT)
     output = fopen("opt.txt", "a");
+#elif defined(THD)
+    output = fopen("opt_thd.txt", "a");
 #elif defined(HASH1)
     output = fopen("opt_hash1.txt", "a");
 #elif defined(HASH2)
@@ -186,6 +203,9 @@ int main(int argc, char *argv[])
     cpu_time4 = diff_in_second(start2, end2);
 #endif
 
+#ifdef THD
+    printf("execution time of pthread : %lf sec\n", cpu_time_thd);
+#endif
     printf("execution time of append() : %lf sec\n", cpu_time1);
     printf("execution time of findName() : %lf sec\n", cpu_time2);
 
@@ -201,3 +221,49 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+#ifdef THD
+void *processArray(void *args)
+{
+    thread_data_t *data = (thread_data_t *)args;
+    char **arr = data->arr;
+    int start = data->start;
+    int end   = data->end;
+    long total = data->total;
+    int i = 0;
+    entry *e = NULL;
+
+#if 0
+    printf("pthred_id=%lu, start=%d, end=%d, total=%lu\n",
+           pthread_self(),
+           start,
+           end,
+           total);
+#endif
+
+    // 1. Wait for a signal to start from the main thread
+    for (i = start; i < end; i++) {
+#if 0
+//        if (strlen(&buf[i]) == 0)
+        printf("pthred_id=0x%lx, bSize=%d, slot=%d, arr[%d]=(%s))\n",
+               pthread_self(),
+               hashTable.bucketSize,
+               (hashTable.pEntry + hashFunc(&(buf[i]), &hashTable))->slot,
+               i,
+               &(buf[i]));
+#endif
+        e = append(&(buf[i]), e);
+    }
+
+    pthread_mutex_lock(& r_mutex);
+    if (running_threads > 0)
+        running_threads--;
+    pthread_mutex_unlock(& r_mutex);
+
+//    clock_gettime(CLOCK_REALTIME, &end_thd);
+//    cpu_time_thd += diff_in_second(start_thd, end_thd);
+
+    // 2. Signal to the main thread that you're done
+    pthread_exit(NULL);
+}
+#endif
