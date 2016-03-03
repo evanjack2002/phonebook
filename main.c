@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #ifdef THD
+#include <unistd.h>
 #include <pthread.h>
 #endif
 
@@ -51,7 +52,7 @@ void test(entry *pHead)
     for (int i = 0; i < 9; i++) {
         e = findName(test[i], pHead);
         if (e) {
-#if 1
+#if 0
             printf("Found ---> input=(%s), lastName=(%s)\n",
                    test[i],
                    e->lastName);
@@ -71,10 +72,6 @@ int main(int argc, char *argv[])
 {
     FILE *fp;
     int i = 0;
-    char line[MAX_LAST_NAME_SIZE];
-    struct timespec start, end;
-    double cpu_time1, cpu_time2;
-
 #ifdef THD
 //    char buf[400000][MAX_LAST_NAME_SIZE];
     unsigned int s = 0;
@@ -82,7 +79,11 @@ int main(int argc, char *argv[])
     thread_data_t thread_data[NUM_OF_THREADS];
     int remainingWork, amountOfWork;
     int startRange, endRange = -1;
+#else
+    char line[MAX_LAST_NAME_SIZE];
 #endif
+    struct timespec start, end;
+    double cpu_time1, cpu_time2;
 
 #ifdef DEBUG
     struct timespec start1, end1;
@@ -114,7 +115,7 @@ int main(int argc, char *argv[])
 #endif
 #ifdef THD
     clock_gettime(CLOCK_REALTIME, &start);
-    while (fgets(&(buf[s]), MAX_LAST_NAME_SIZE, fp)) {
+    while (fgets((char *) & (buf[s]), MAX_LAST_NAME_SIZE, fp)) {
         while (buf[s][i] != '\0')
             i++;
         buf[s][i - 1] = '\0';
@@ -148,8 +149,6 @@ int main(int argc, char *argv[])
 
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time1 = diff_in_second(start, end);
-
-    cpu_time_thd = cpu_time_thd / NUM_OF_THREADS;
 #else
     clock_gettime(CLOCK_REALTIME, &start);
     while (fgets(line, sizeof(line), fp)) {
@@ -208,6 +207,7 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef THD
+    cpu_time_thd = cpu_time_thd / NUM_OF_THREADS;
     printf("execution time of pthread : %lf sec\n", cpu_time_thd);
 #endif
     printf("execution time of append() : %lf sec\n", cpu_time1);
@@ -230,15 +230,15 @@ int main(int argc, char *argv[])
 void *processArray(void *args)
 {
     thread_data_t *data = (thread_data_t *)args;
-    char **arr = data->arr;
+//    char **arr = data->arr;
     int start = data->start;
     int end   = data->end;
-    long total = data->total;
+//    long total = data->total;
     int i = 0;
     entry *e = NULL;
 
     pthread_mutex_lock(& r_mutex);
-
+    clock_gettime(CLOCK_REALTIME, &start_thd);
 #if 0
     printf("pthred_id=%lu, start=%d, end=%d, total=%lu\n",
            pthread_self(),
@@ -248,7 +248,6 @@ void *processArray(void *args)
 #endif
 
     // 1. Wait for a signal to start from the main thread
-    clock_gettime(CLOCK_REALTIME, &start_thd);
     for (i = start; i < end; i++) {
 #if 0
 //        if (strlen(&buf[i]) == 0)
@@ -259,8 +258,7 @@ void *processArray(void *args)
                i,
                &(buf[i]));
 #endif
-
-        e = append(&(buf[i]), e);
+        e = append((char *) & (buf[i]), e);
     }
     clock_gettime(CLOCK_REALTIME, &end_thd);
     cpu_time_thd += diff_in_second(start_thd, end_thd);

@@ -14,8 +14,6 @@ hashTable_t hashTable;
 
 #ifdef THD
 extern char buf[400000][MAX_LAST_NAME_SIZE];
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-extern pthread_mutex_t r_mutex;
 extern unsigned int running_threads;
 #endif
 
@@ -120,7 +118,7 @@ entry *append(char lastName[], entry *e)
     strcpy(e->lastName, lastName);
 
 #ifdef THD
-    pthread_mutex_lock(&mutex);
+//    pthread_mutex_lock(&mutex);
 #endif
 
     if (hash->pHead == NULL) {
@@ -138,7 +136,7 @@ entry *append(char lastName[], entry *e)
 #endif
 
 #ifdef THD
-    pthread_mutex_unlock(&mutex);
+//   pthread_mutex_unlock(&mutex);
 #endif
 
     return e;
