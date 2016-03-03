@@ -18,8 +18,8 @@
 typedef struct thread_data_s {
     int start;
     int end;
-    long total;
-    char **arr;
+//    long total;
+//    char **arr;
 } thread_data_t;
 void *processArray(void *args);
 #endif

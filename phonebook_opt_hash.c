@@ -9,7 +9,6 @@
 #include "phonebook_opt_hash.h"
 
 /* FILL YOUR OWN IMPLEMENTATION HERE! */
-
 hashTable_t hashTable;
 
 #ifdef THD

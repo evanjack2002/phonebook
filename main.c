@@ -15,8 +15,9 @@
 
 #ifdef THD
 char buf[400000][MAX_LAST_NAME_SIZE];
-//pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t r_mutex = PTHREAD_MUTEX_INITIALIZER;
+struct timespec start_thd, end_thd;
+double cpu_time_thd;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 unsigned int running_threads = 0;
 #define NUM_OF_THREADS 4
 #endif
@@ -47,26 +48,10 @@ void test(entry *pHead)
         "aaaaah",
         "yakattalo"
     };
-
-    entry *e;
     for (int i = 0; i < 9; i++) {
-        e = findName(test[i], pHead);
-        if (e) {
-#if 0
-            printf("Found ---> input=(%s), lastName=(%s)\n",
-                   test[i],
-                   e->lastName);
-#endif
-        } else
-            printf("Not Found ---> input=(%s)\n",
-                   test[i]);
+        assert(0 == strcmp(findName(test[i], pHead)->lastName, test[i]));
     }
 }
-
-#ifdef THD
-struct timespec start_thd, end_thd;
-double cpu_time_thd;
-#endif
 
 int main(int argc, char *argv[])
 {
@@ -125,28 +110,29 @@ int main(int argc, char *argv[])
 
     remainingWork = s;
     for (int i = 0; i < NUM_OF_THREADS; i++) {
-
         amountOfWork = remainingWork / (NUM_OF_THREADS - i);
         startRange = endRange + 1;
         endRange   = startRange + amountOfWork;
 
-//        thread_data[i].arr   = (char **)buf;
         thread_data[i].start = startRange;
         thread_data[i].end   = endRange;
-//        thread_data[i].total = s;
 
-        pthread_mutex_lock(& r_mutex);
         running_threads++;
-        pthread_mutex_unlock(& r_mutex);
 
         pthread_create(&threads[i], NULL, processArray, (void *)&thread_data[i]);
 
         remainingWork -= amountOfWork;
     }
-
+#if 0
+    void *tret;
+    for (int i = 0; i < NUM_OF_THREADS; i++) {
+        pthread_join(threads[i], &tret);
+    }
+#endif
+#if 1
     while (running_threads > 0)
         usleep(10);
-
+#endif
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time1 = diff_in_second(start, end);
 #else
@@ -237,7 +223,7 @@ void *processArray(void *args)
     int i = 0;
     entry *e = NULL;
 
-    pthread_mutex_lock(& r_mutex);
+    pthread_mutex_lock(& mutex);
     clock_gettime(CLOCK_REALTIME, &start_thd);
 #if 0
     printf("pthred_id=%lu, start=%d, end=%d, total=%lu\n",
@@ -266,7 +252,7 @@ void *processArray(void *args)
     if (running_threads > 0)
         running_threads--;
 
-    pthread_mutex_unlock(& r_mutex);
+    pthread_mutex_unlock(& mutex);
 
     // 2. Signal to the main thread that you're done
     pthread_exit(NULL);

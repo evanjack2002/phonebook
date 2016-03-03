@@ -1,5 +1,5 @@
 CC ?= gcc
-CFLAGS_common ?= -Wall -std=gnu99 -g -DDEBUG
+CFLAGS_common ?= -Wall -std=gnu99 -DDEBUG -g
 CFLAGS_orig = -O0
 CFLAGS_opt  = -O0
 CFLAGS_opt_hash1  = -O0 -DHASH_1 -DDEBUG1
@@ -33,8 +33,6 @@ phonebook_opt_hash2: $(SRCS_common) phonebook_opt_hash.c phonebook_opt_hash.h
 		-DIMPL="\"$(SRC_HASH).h\"" -o $@ \
 		$(SRCS_common) $(SRC_HASH).c
 
-thd: phonebook_opt_thread
-
 phonebook_opt_thread: $(SRCS_common) phonebook_opt_hash.c phonebook_opt_hash.h
 	$(CC) $(CFLAGS_common) $(CFLAGS_opt_thread) \
 		-DIMPL="\"$(SRC_HASH).h\"" -o $@ \
@@ -43,15 +41,19 @@ phonebook_opt_thread: $(SRCS_common) phonebook_opt_hash.c phonebook_opt_hash.h
 run1: phonebook_orig
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	watch -d -t "./phonebook_orig && echo 3 | sudo tee /proc/sys/vm/drop_caches"
+
 run2: phonebook_opt
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	watch -d -t "./phonebook_opt && echo 3 | sudo tee /proc/sys/vm/drop_caches"
+
 run3: phonebook_opt_hash1
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	watch -d -t "./phonebook_opt_hash1 && echo 3 | sudo tee /proc/sys/vm/drop_caches"
+
 run4: phonebook_opt_hash2
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	watch -d -t "./phonebook_opt_hash2 && echo 3 | sudo tee /proc/sys/vm/drop_caches"
+
 run5: phonebook_opt_thread
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	watch -d -t "./phonebook_opt_thread && echo 3 | sudo tee /proc/sys/vm/drop_caches"
@@ -87,42 +89,46 @@ cc:
 
 rpt1: rpt_1
 	perf report -i perf.orig
+
 rpt2: rpt_2
 	perf report -i perf.opt
+
 rpt3: rpt_3
 	perf report -i perf.opt_hash1
+
 rpt4: rpt_4
 	perf report -i perf.opt_hash2
+
 rpt5: rpt_5
 	perf report -i perf.opt_thd
+
 rpt_1: phonebook_orig cc
 	perf record \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
 		-o perf.orig ./phonebook_orig
+
 rpt_2: phonebook_opt cc
 	perf record \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
 		-o perf.opt ./phonebook_opt
+
 rpt_3: phonebook_opt_hash1 cc
 	perf record \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
 		-o perf.opt_hash1 ./phonebook_opt_hash1
+
 rpt_4: phonebook_opt_hash2 cc
 	perf record \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
 		-o perf.opt_hash2 ./phonebook_opt_hash2
+
 rpt_5: phonebook_opt_thread cc
 	perf record \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
 		-o perf.opt_thd ./phonebook_opt_thread
+
 rpt: rpt_1 rpt_2 rpt_3 rpt_4
 
-test: test.c
-	$(CC) -pthread $(CFLAGS_common) $(CFLAGS_orig) \
-	-o $@ $@.c
-test1: test1.c
-	$(CC) -pthread $(CFLAGS_common) $(CFLAGS_orig) \
-	-o $@ $@.c
 test2: test2.c
 	$(CC) -pthread $(CFLAGS_common) $(CFLAGS_orig) \
 	-o $@ $@.c
