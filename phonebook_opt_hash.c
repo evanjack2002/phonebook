@@ -77,31 +77,42 @@ entry *findName(char lastName[], entry *e)
     hash = (hashTable.pEntry) + key;
 #endif
 
-    e = hash->pHead;
-    while (e != NULL) {
-        if (strcasecmp(lastName, e->lastName) == 0) {
-#ifdef DEBUG1
-            printf("bSize=%u, bUse=%u, sSize=%u, input=(%s:%u), key=%u, value=(%s), sIndex=%u\n",
-                   hashTable.tableSize,
-                   hashTable.bucketSize,
-                   hash->slot,
-                   lastName,
-                   key,
-                   hash->key,
-                   e->lastName,
-                   index);
+#ifdef THD
+    for (int i = 0; i < NUM_OF_THREADS; i++) {
+        hash = &hashTable.ht[i][key] ;
 #endif
-            return e;
+        e = hash->pHead;
+        while (e != NULL) {
+            if (strcasecmp(lastName, e->lastName) == 0) {
+#ifdef DEBUG1
+                printf("bSize=%u, bUse=%u, sSize=%u, input=(%s:%u), key=%u, value=(%s), sIndex=%u\n",
+                       hashTable.tableSize,
+                       hashTable.bucketSize,
+                       hash->slot,
+                       lastName,
+                       key,
+                       hash->key,
+                       e->lastName,
+                       index);
+#endif
+                return e;
+            }
+            e = e->pNext;
+#ifdef DEBUG1
+            index++;
+#endif
         }
-        e = e->pNext;
-#ifdef DEBUG1
-        index++;
-#endif
+#ifdef THD
     }
+#endif
     return NULL;
 }
 
+#ifdef THD
+entry *append(char lastName[], entry *e, int thd)
+#else
 entry *append(char lastName[], entry *e)
+#endif
 {
     unsigned int key = 0;
     hashEntry_t *hash;
@@ -114,6 +125,11 @@ entry *append(char lastName[], entry *e)
 #else
     hash = ((hashTable.pEntry) + key);
 #endif
+
+#ifdef THD
+    hash = &hashTable.ht[thd][key] ;
+#endif
+
     strcpy(e->lastName, lastName);
 
 #ifdef THD

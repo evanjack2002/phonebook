@@ -18,10 +18,11 @@
 typedef struct thread_data_s {
     int start;
     int end;
+    int thd;
 //    long total;
 //    char **arr;
 } thread_data_t;
-void *processArray(void *args);
+#define NUM_OF_THREADS 4
 #endif
 
 typedef struct phoneBook_s {
@@ -63,10 +64,17 @@ typedef struct hashTable_s {
 #endif
     unsigned int bucketSize;
     unsigned int tableSize;
+#ifdef THD
+    hashEntry_t ht[NUM_OF_THREADS][(HASH_TABLE_BUCKET / NUM_OF_THREADS)];
+#endif
 } hashTable_t;
 
 entry *findName(char lastName[], entry *pHead);
+#ifdef THD
+entry *append(char lastName[], entry *e, int thd);
+#else
 entry *append(char lastName[], entry *e);
+#endif
 
 void initHashTable();
 
