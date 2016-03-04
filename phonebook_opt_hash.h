@@ -15,14 +15,16 @@
 #endif
 
 #ifdef THD
+#define NUM_OF_THREADS 2
+
+extern char buf[400000][MAX_LAST_NAME_SIZE];
+extern pthread_mutex_t mutex;
+
 typedef struct thread_data_s {
     int start;
     int end;
     int thd;
-//    long total;
-//    char **arr;
 } thread_data_t;
-#define NUM_OF_THREADS 4
 #endif
 
 typedef struct phoneBook_s {
@@ -51,9 +53,15 @@ typedef struct hashEntry_s {
 } hashEntry_t;
 
 #if 1
-#define HASH_TABLE_BUCKET 42737
+#define BUCKET_UNIT 42737
 #else
-#define HASH_TABLE_BUCKET 7919
+#define BUCKET_UNIT 7919
+#endif
+
+#ifdef THD
+#define HASH_TABLE_BUCKET ((BUCKET_UNIT / NUM_OF_THREADS) + 1)
+#else
+#define HASH_TABLE_BUCKET BUCKET_UNIT
 #endif
 
 typedef struct hashTable_s {
@@ -65,7 +73,7 @@ typedef struct hashTable_s {
     unsigned int bucketSize;
     unsigned int tableSize;
 #ifdef THD
-    hashEntry_t ht[NUM_OF_THREADS][(HASH_TABLE_BUCKET / NUM_OF_THREADS)];
+    hashEntry_t ht[NUM_OF_THREADS][HASH_TABLE_BUCKET];
 #endif
 } hashTable_t;
 

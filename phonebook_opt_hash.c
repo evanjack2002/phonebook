@@ -11,11 +11,6 @@
 /* FILL YOUR OWN IMPLEMENTATION HERE! */
 hashTable_t hashTable;
 
-#ifdef THD
-extern char buf[400000][MAX_LAST_NAME_SIZE];
-extern unsigned int running_threads;
-#endif
-
 void initHashTable()
 {
 #ifdef E_TEST_1
@@ -85,9 +80,16 @@ entry *findName(char lastName[], entry *e)
         while (e != NULL) {
             if (strcasecmp(lastName, e->lastName) == 0) {
 #ifdef DEBUG1
+#ifdef THD
+                printf("thd=%d, bSize=%u, bUse=%u, sSize=%u, input=(%s:%u), key=%u, value=(%s), sIndex=%u\n",
+                       i,
+                       hashTable.tableSize,
+                       hashTable.bucketSize,
+#else
                 printf("bSize=%u, bUse=%u, sSize=%u, input=(%s:%u), key=%u, value=(%s), sIndex=%u\n",
                        hashTable.tableSize,
                        hashTable.bucketSize,
+#endif
                        hash->slot,
                        lastName,
                        key,
@@ -132,14 +134,18 @@ entry *append(char lastName[], entry *e)
 
     strcpy(e->lastName, lastName);
 
-#ifdef THD
-//    pthread_mutex_lock(&mutex);
-#endif
-
     if (hash->pHead == NULL) {
         hash->pHead = e;
 #ifdef DEBUG1
+#if 1
         hashTable.bucketSize++;
+#else
+#ifdef THD
+        pthread_mutex_lock(& mutex);
+        hashTable.bucketSize++;
+        pthread_mutex_unlock(& mutex);
+#endif
+#endif
 #endif
     } else {
         hash->pTail->pNext = e;
@@ -148,10 +154,6 @@ entry *append(char lastName[], entry *e)
 #ifdef DEBUG1
     hash->key = key;
     hash->slot++;
-#endif
-
-#ifdef THD
-//   pthread_mutex_unlock(&mutex);
 #endif
 
     return e;

@@ -15,12 +15,11 @@
 
 #ifdef THD
 char buf[400000][MAX_LAST_NAME_SIZE];
-struct timespec start_thd, end_thd;
-double cpu_time_thd;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 unsigned int running_threads = 0;
-//#define NUM_OF_THREADS 4
-void *processArray(void *args);
+struct timespec start_thd, end_thd;
+double cpu_time_thd;
+void *processArray(void * args);
 #endif
 
 static double diff_in_second(struct timespec t1, struct timespec t2)
@@ -74,7 +73,8 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
     struct timespec start1, end1;
     struct timespec start2, end2;
-    double cpu_time3, cpu_time4;
+    double cpu_time3;
+    //double cpu_time4;
     clock_gettime(CLOCK_REALTIME, &start1);
 #endif
 
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 #endif
 #ifdef THD
     clock_gettime(CLOCK_REALTIME, &start);
-    while (fgets((char *) & (buf[s]), MAX_LAST_NAME_SIZE, fp)) {
+    while (fgets((char *) &(buf[s]), MAX_LAST_NAME_SIZE, fp)) {
         while (buf[s][i] != '\0')
             i++;
         buf[s][i - 1] = '\0';
@@ -175,6 +175,8 @@ int main(int argc, char *argv[])
     FILE *output;
 #if defined(OPT)
     output = fopen("opt.txt", "a");
+#elif defined(THD2)
+    output = fopen("opt_thd2.txt", "a");
 #elif defined(THD)
     output = fopen("opt_thd.txt", "a");
 #elif defined(HASH1)
@@ -191,13 +193,9 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_REALTIME, &start2);
     test(pHead);
     clock_gettime(CLOCK_REALTIME, &end2);
-    cpu_time4 = diff_in_second(start2, end2);
+//    cpu_time4 = diff_in_second(start2, end2);
 #endif
 
-#ifdef THD
-    cpu_time_thd = cpu_time_thd / NUM_OF_THREADS;
-    printf("execution time of pthread : %lf sec\n", cpu_time_thd);
-#endif
     printf("execution time of append() : %lf sec\n", cpu_time1);
     printf("execution time of findName() : %lf sec\n", cpu_time2);
 
@@ -207,8 +205,14 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
     clock_gettime(CLOCK_REALTIME, &end1);
     cpu_time3 = diff_in_second(start1, end1);
-    printf("execution time of test() : %lf sec\n", cpu_time4);
     printf("execution time of total : %lf sec\n", cpu_time3);
+    //printf("execution time of test() : %lf sec\n", cpu_time4);
+#if 0
+#ifdef THD
+    cpu_time_thd = cpu_time_thd / NUM_OF_THREADS;
+    printf("execution time of pthread : %lf sec\n", cpu_time_thd);
+#endif
+#endif
 #endif
 
     return 0;
