@@ -72,16 +72,17 @@ typedef struct hashEntry_s {
 #endif
 
 typedef struct hashTable_s {
+#ifdef THD
+        hashEntry_t ht[NUM_OF_THREADS][HASH_TABLE_BUCKET];
+#else
 #ifdef E_TEST_1
     hashEntry_t hashEntry[HASH_TABLE_BUCKET];
 #else
     hashEntry_t *pEntry;
 #endif
+#endif
     unsigned int bucketSize;
     unsigned int tableSize;
-#ifdef THD
-    hashEntry_t ht[NUM_OF_THREADS][HASH_TABLE_BUCKET];
-#endif
 } hashTable_t;
 
 entry *findName(char lastName[], entry *pHead);

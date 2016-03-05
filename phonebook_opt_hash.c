@@ -13,10 +13,12 @@ hashTable_t hashTable;
 
 void initHashTable()
 {
+#ifndef THD
 #ifdef E_TEST_1
     memset(&hashTable, 0, sizeof(hashTable_t));
 #else
     hashTable.pEntry = malloc(sizeof(hashEntry_t) * HASH_TABLE_BUCKET);
+#endif
 #endif
     hashTable.tableSize = HASH_TABLE_BUCKET;
     hashTable.bucketSize = 0;
@@ -24,9 +26,11 @@ void initHashTable()
 
 void freeHashTable()
 {
+#ifndef THD
 #ifdef E_TEST_1
 #else
     free(hashTable.pEntry);
+#endif
 #endif
 }
 
@@ -71,14 +75,12 @@ entry *findName(char lastName[], entry *e)
 
     key = hashFunc(lastName, &hashTable);
 
-#ifdef THD
+#if defined(THD) && defined(DEBUG2)
     printf("(%s:%d) ---> START, input=(%s), key=%u, NUM_OF_THREADS=%d, running_threads=%d\n",__FUNCTION__,__LINE__,
            lastName,
            key,
            NUM_OF_THREADS,
            running_threads);
-    if(running_threads<NUM_OF_THREADS)
-        running_threads = NUM_OF_THREADS;
 #endif
 
 #ifndef THD
@@ -90,9 +92,9 @@ entry *findName(char lastName[], entry *e)
 #endif
 
 #ifdef THD
-    for (int i = 0; i < running_threads; i++) {
+    for (int i = 0; i < NUM_OF_THREADS; i++) {
         hash = &hashTable.ht[i][key] ;
-#if 0
+#ifdef DEBUG2
         printf("(%s:%d) ---> thd=%d, bSize=%u, bUse=%u, sSize=%u, input=(%s:%u), key=%u, value=(%s), sIndex=%u\n", __FUNCTION__,__LINE__,
                i,
                hashTable.tableSize,
@@ -138,9 +140,10 @@ entry *findName(char lastName[], entry *e)
     }
 #endif
 
-#if THD
-    printf("(%s:%d) ---> END, NOT FOUND, input=(%s), key=%u, running_threads=%d\n",__FUNCTION__,__LINE__,
-           lastName, key, running_threads);
+#if 1
+    printf("(%s:%d) ---> END, NOT FOUND, input=(%s), key=%u\n",__FUNCTION__,__LINE__,
+           lastName,
+           key);
 #endif
 
     return NULL;
@@ -173,14 +176,12 @@ entry *append(char lastName[], entry *e)
 #endif
 #endif
 
-#ifdef THD
-#if 1
+#if defined(THD) && defined(DEBUG2)
     if (strcasecmp(lastName, "uninvolved") == 0)
         printf("\r\n(%s:%d)---> thd=%d, lastName=(%s), key=%u\n", __FUNCTION__, __LINE__,
                thd,
                lastName,
                key);
-#endif
 #endif
 
     strcpy(e->lastName, lastName);
@@ -188,7 +189,7 @@ entry *append(char lastName[], entry *e)
     if (hash->pHead == NULL) {
         hash->pHead = e;
 #ifdef DEBUG1
-#if 0
+#if 1
         hashTable.bucketSize++;
 #else
 #ifdef THD
@@ -202,6 +203,7 @@ entry *append(char lastName[], entry *e)
         hash->pTail->pNext = e;
     }
     hash->pTail = e;
+#ifdef DEBUG1
 #if 0
     pthread_mutex_lock(& mutex);
     hash->key = key;
@@ -210,6 +212,7 @@ entry *append(char lastName[], entry *e)
 #else
     hash->key = key;
     hash->slot++;
+#endif
 #endif
 
 #ifdef THD

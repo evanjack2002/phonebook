@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
     struct timespec start1, end1;
     struct timespec start2, end2;
     double cpu_time3;
-    //double cpu_time4;
+//    double cpu_time4;
     clock_gettime(CLOCK_REALTIME, &start1);
 #endif
 
@@ -120,8 +120,8 @@ int main(int argc, char *argv[])
             if(ss >= NUM_OF_THREADS) {
                 ss=0;
 //                pthread_join(threads[ss], &tret);
-                for (int i = 0; i < NUM_OF_THREADS; i++) {
-                    pthread_join(threads[i], &tret);
+                for (int j = 0; j < NUM_OF_THREADS; j++) {
+                    pthread_join(threads[j], &tret);
                 }
             }
 #endif
@@ -133,7 +133,6 @@ int main(int argc, char *argv[])
             ss++;
         }
     }
-
 
     if((s % LINE_E) !=0) {
 #if 1
@@ -152,7 +151,7 @@ int main(int argc, char *argv[])
     printf("\r\n(%s:%d)---> ss=%d", __FUNCTION__, __LINE__,
            ss);
 #endif
-    running_threads = ss;
+//    running_threads = ss;
 #if 0
     while(running_threads)
         usleep(10);
@@ -160,8 +159,8 @@ int main(int argc, char *argv[])
 #if 0
     pthread_join(threads[ss], &tret);
 #else
-    for (int i = 0; i <= ss; i++) {
-        pthread_join(threads[i], &tret);
+    for (int j = 0; j <= ss; j++) {
+        pthread_join(threads[j], &tret);
 #if 0
         printf("(%s:%d)---> NUM_OF_THREADS=%d, tret=%d\n", __FUNCTION__, __LINE__,
                NUM_OF_THREADS,
@@ -174,7 +173,7 @@ int main(int argc, char *argv[])
 //    pthread_exit(NULL);
 
 #ifdef DEBUG2
-    printf("-----------------------------------------------------------\n");
+    printf("\r\n(%s:%d)---------------------------------------------->", __FUNCTION__, __LINE__);
 #endif
 
     clock_gettime(CLOCK_REALTIME, &end);
@@ -202,7 +201,7 @@ int main(int argc, char *argv[])
     e = pHead;
 
 #ifdef DEBUG2
-    printf("-----------------------------------------------------------\n");
+    printf("\r\n(%s:%d)---------------------------------------------->", __FUNCTION__, __LINE__);
 #endif
 
     assert(findName(input, e) &&
@@ -252,11 +251,11 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_REALTIME, &end1);
     cpu_time3 = diff_in_second(start1, end1);
     printf("execution time of total : %lf sec\n", cpu_time3);
-//printf("execution time of test() : %lf sec\n", cpu_time4);
 #if 0
+    printf("execution time of test() : %lf sec\n", cpu_time4);
 #ifdef THD
     cpu_time_thd = cpu_time_thd / NUM_OF_THREADS;
-//    printf("execution time of pthread : %lf sec\n", cpu_time_thd);
+    printf("execution time of pthread : %lf sec\n", cpu_time_thd);
 #endif
 #endif
 #endif
@@ -275,14 +274,13 @@ void *processArray(void *args)
     int i = 0;
     entry *e = NULL;
 
-#if 1
+#if defined(THD) && defined(DEBUG2)
     printf("(%s:%d) ---> pthred_id=0x%lx, start=%d, end=%d, thd=%d\n",__FUNCTION__,__LINE__,
            pthread_self(),
            start,
            end,
            thd);
 #endif
-//    pthread_detach(pthread_self());
 //    pthread_mutex_lock(& mutex);
 
     clock_gettime(CLOCK_REALTIME, &start_thd);
