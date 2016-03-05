@@ -107,7 +107,9 @@ entry *findName(char lastName[], entry *e)
                index);
 #endif
 #endif
+#ifdef DEBUG1
         index = 0;
+#endif
         e = hash->pHead;
         while (e != NULL) {
             if (strcasecmp(lastName, e->lastName) == 0) {
