@@ -45,7 +45,7 @@ void test(entry *pHead)
         "pungoteague",
         "reweighted",
         "xiphisternal",
-        "aaaaah",
+        "aaah",
         "yakattalo"
     };
     for (int i = 0; i < 9; i++) {
@@ -246,6 +246,10 @@ int main(int argc, char *argv[])
 
     if (pHead->pNext) free(pHead->pNext);
     free(pHead);
+
+#if defined(HASH1) || defined(HASH2)
+    freeHashTable();
+#endif
 
 #ifdef DEBUG
     clock_gettime(CLOCK_REALTIME, &end1);

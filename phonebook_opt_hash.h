@@ -93,5 +93,6 @@ entry *append(char lastName[], entry *e);
 #endif
 
 void initHashTable();
+void freeHashTable();
 
 #endif
