@@ -4,11 +4,12 @@ CFLAGS_orig = -O0
 CFLAGS_opt  = -O0
 CFLAGS_opt_hash1  = -O0 -DHASH_1
 CFLAGS_opt_hash2  = -O0 -DHASH_2
-CFLAGS_opt_thread  = -O0 -pthread -DHASH_1 -DTHD
-CFLAGS_opt_thread2  = -O0 -pthread -DHASH_2 -DTHD -DTHD2
+CFLAGS_opt_thread  = -O0 -pthread -DHASH_1 -DTHREAD
+CFLAGS_opt_thread2  = -O0 -pthread -DHASH_2 -DTHREAD -DTHD2
 
-EXEC = phonebook_orig phonebook_opt phonebook_opt_hash1 phonebook_opt_hash2 \
-	phonebook_opt_thread phonebook_opt_thread2
+EXEC = phonebook_orig phonebook_opt \
+	phonebook_opt_hash1 phonebook_opt_hash2 \
+	phonebook_opt_thread1 phonebook_opt_thread2
 
 all: $(EXEC)
 
@@ -36,9 +37,7 @@ phonebook_opt_hash2: $(SRCS_common) phonebook_opt_hash.c phonebook_opt_hash.h
 		-DIMPL="\"$(SRC_HASH).h\"" -o $@ \
 		$(SRCS_common) $(SRC_HASH).c
 
-thd: phonebook_opt_thread
-
-phonebook_opt_thread: $(SRCS_common) phonebook_opt_hash.c phonebook_opt_hash.h
+phonebook_opt_thread1: $(SRCS_common) phonebook_opt_hash.c phonebook_opt_hash.h
 	$(CC) $(CFLAGS_common) $(CFLAGS_opt_thread) \
 		-DIMPL="\"$(SRC_HASH).h\"" -o $@ \
 		$(SRCS_common) $(SRC_HASH).c
@@ -64,20 +63,13 @@ run4: phonebook_opt_hash2
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	watch -d -t "./phonebook_opt_hash2 && echo 3 | sudo tee /proc/sys/vm/drop_caches"
 
-run5: phonebook_opt_thread
+run5: phonebook_opt_thread1
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
-	watch -d -t "./phonebook_opt_thread && echo 3 | sudo tee /proc/sys/vm/drop_caches"
+	watch -d -t "./phonebook_opt_thread1 && echo 3 | sudo tee /proc/sys/vm/drop_caches"
 
 run6: phonebook_opt_thread2
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	watch -d -t "./phonebook_opt_thread2 && echo 3 | sudo tee /proc/sys/vm/drop_caches"
-
-
-test5:
-	echo 3 | sudo tee /proc/sys/vm/drop_caches
-	perf stat --repeat 100 \
-		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
-		./phonebook_opt_thread 1>/dev/null
 
 cache-test: $(EXEC)
 	@rm -f *.txt
@@ -101,10 +93,32 @@ cache-test: $(EXEC)
 	echo 1 | sudo tee /proc/sys/vm/drop_caches
 	perf stat --repeat 100 \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
-		./phonebook_opt_thread 1>/dev/null
+		./phonebook_opt_thread1 1>/dev/null
 	echo 1 | sudo tee /proc/sys/vm/drop_caches
 	perf stat --repeat 100 \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
+		./phonebook_opt_thread2 1>/dev/null
+
+test1: $(EXEC)
+	@rm -f *.txt
+	sudo sh -c " echo 0 > /proc/sys/kernel/kptr_restrict"
+	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	perf stat --repeat 100 \
+		./phonebook_orig 1>/dev/null
+	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	perf stat --repeat 100 \
+		./phonebook_opt 1>/dev/null
+	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	perf stat --repeat 100 \
+		./phonebook_opt_hash1 1>/dev/null
+	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	perf stat --repeat 100 \
+		./phonebook_opt_hash2 1>/dev/null
+	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	perf stat --repeat 100 \
+		./phonebook_opt_thread1 1>/dev/null
+	echo 1 | sudo tee /proc/sys/vm/drop_caches
+	perf stat --repeat 100 \
 		./phonebook_opt_thread2 1>/dev/null
 
 cc:
@@ -112,59 +126,41 @@ cc:
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	echo 1 | sudo tee /proc/sys/vm/drop_caches
 
-rpt1: rpt_1
-	perf report -i perf.orig
-
-rpt2: rpt_2
-	perf report -i perf.opt
-
-rpt3: rpt_3
-	perf report -i perf.opt_hash1
-
-rpt4: rpt_4
-	perf report -i perf.opt_hash2
-
-rpt5: rpt_5
-	perf report -i perf.opt_thd
-
-rpt6: rpt_6
-	perf report -i perf.opt_thd2
-
-rpt_1: phonebook_orig cc
+rpt1: phonebook_orig cc
 	perf record \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
 		-o perf.orig ./phonebook_orig
+	perf report -i perf.orig
 
-rpt_2: phonebook_opt cc
+rpt2: phonebook_opt cc
 	perf record \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
 		-o perf.opt ./phonebook_opt
+	perf report -i perf.opt
 
-rpt_3: phonebook_opt_hash1 cc
+rpt3: phonebook_opt_hash1 cc
 	perf record \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
 		-o perf.opt_hash1 ./phonebook_opt_hash1
+	perf report -i perf.opt_hash1
 
-rpt_4: phonebook_opt_hash2 cc
+rpt4: phonebook_opt_hash2 cc
 	perf record \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
 		-o perf.opt_hash2 ./phonebook_opt_hash2
+	perf report -i perf.opt_hash2
 
-rpt_5: phonebook_opt_thread cc
+rpt5: phonebook_opt_thread1 cc
 	perf record \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
-		-o perf.opt_thd ./phonebook_opt_thread
+		-o perf.opt_thread1 ./phonebook_opt_thread1
+	perf report -i perf.opt_thread1
 
-rpt_6: phonebook_opt_thread2 cc
+rpt6: phonebook_opt_thread2 cc
 	perf record \
 		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
-		-o perf.opt_thd2 ./phonebook_opt_thread2
-
-rpt: rpt_1 rpt_2 rpt_3 rpt_4
-
-test2: test2.c
-	$(CC) -pthread $(CFLAGS_common) $(CFLAGS_orig) \
-	-o $@ $@.c
+		-o perf.opt_thread2 ./phonebook_opt_thread2
+	perf report -i perf.opt_thread2
 
 output.txt: cache-test calculate
 	./calculate
@@ -178,4 +174,4 @@ calculate: calculate.c
 .PHONY: clean
 clean:
 	$(RM) $(EXEC) *.o perf.* \
-		calculate *.txt runtime.png test2
+		calculate *.txt runtime.png

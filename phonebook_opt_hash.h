@@ -10,28 +10,28 @@
 #define HASH1 1
 #endif
 
-#ifdef HASH_2
+#if HASH_2
 #define HASH2 1
 #endif
 
-#ifdef THD
-#define MAX_BUFFER_SIZE 400000
-#define LINE_E 10000
+#if 1
+#define BUCKET_UNIT 42737
+#else
+#define BUCKET_UNIT 7919
+#endif
 
+#ifdef THREAD
 #if 1
 #define NUM_OF_THREADS 4
 #else
-#define NUM_OF_THREADS (MAX_BUFFER_SIZE/LINE_E + 1)
+#define NUM_OF_THREADS (MAX_BUFFER_SIZE/LINE_H + 1)
 #endif
-
+#define HASH_TABLE_BUCKET ((BUCKET_UNIT / NUM_OF_THREADS) + 1)
+#define MAX_BUFFER_SIZE 400000
+#define LINE_H 10000
 extern char buf[MAX_BUFFER_SIZE][MAX_LAST_NAME_SIZE];
-extern pthread_mutex_t mutex;
-
-typedef struct thread_data_s {
-    int start;
-    int end;
-    int thd;
-} thread_data_t;
+#else
+#define HASH_TABLE_BUCKET BUCKET_UNIT
 #endif
 
 typedef struct phoneBook_s {
@@ -59,40 +59,38 @@ typedef struct hashEntry_s {
     entry *pTail;
 } hashEntry_t;
 
-#if 1
-#define BUCKET_UNIT 42737
-#else
-#define BUCKET_UNIT 7919
-#endif
-
-#ifdef THD
-#define HASH_TABLE_BUCKET ((BUCKET_UNIT / NUM_OF_THREADS) + 1)
-#else
-#define HASH_TABLE_BUCKET BUCKET_UNIT
-#endif
-
 typedef struct hashTable_s {
-#ifdef THD
-        hashEntry_t ht[NUM_OF_THREADS][HASH_TABLE_BUCKET];
+#ifdef THREAD
+    hashEntry_t bucket[NUM_OF_THREADS][HASH_TABLE_BUCKET];
 #else
 #ifdef E_TEST_1
-    hashEntry_t hashEntry[HASH_TABLE_BUCKET];
+    hashEntry_t bucket[HASH_TABLE_BUCKET];
 #else
-    hashEntry_t *pEntry;
+    hashEntry_t *bucket;
 #endif
 #endif
     unsigned int bucketSize;
     unsigned int tableSize;
 } hashTable_t;
 
+#ifdef THREAD
+typedef struct thread_data_s {
+    int start;
+    int end;
+    int thd;
+} thread_data_t;
+#endif
+
 entry *findName(char lastName[], entry *pHead);
-#ifdef THD
+#ifdef THREAD
 entry *append(char lastName[], entry *e, int thd);
 #else
 entry *append(char lastName[], entry *e);
 #endif
 
+#if defined(HASH1) || defined(HASH2)
 void initHashTable();
 void freeHashTable();
+#endif
 
 #endif

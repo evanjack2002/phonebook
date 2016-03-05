@@ -4,7 +4,7 @@
 #include <time.h>
 #include <assert.h>
 
-#ifdef THD
+#ifdef THREAD
 #include <unistd.h>
 #include <pthread.h>
 #endif
@@ -13,12 +13,12 @@
 
 #define DICT_FILE "./dictionary/words.txt"
 
-#ifdef THD
+#ifdef RUN_TEST
+void runTest(entry *pHead);
+#endif
+
+#ifdef THREAD
 char buf[MAX_BUFFER_SIZE][MAX_LAST_NAME_SIZE];
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-unsigned int running_threads = 0;
-struct timespec start_thd, end_thd;
-double cpu_time_thd;
 void *processArray(void * args);
 #endif
 
@@ -35,51 +35,30 @@ static double diff_in_second(struct timespec t1, struct timespec t2)
     return (diff.tv_sec + diff.tv_nsec / 1000000000.0);
 }
 
-void test(entry *pHead)
-{
-    char test[9][MAX_LAST_NAME_SIZE] = {
-        "uninvolved",
-        "zyxel",
-        "whiteshank",
-        "odontomous",
-        "pungoteague",
-        "reweighted",
-        "xiphisternal",
-        "aaah",
-        "yakattalo"
-    };
-    for (int i = 0; i < 9; i++) {
-        assert(0 == strcmp(findName(test[i], pHead)->lastName, test[i]));
-    }
-}
-
 int main(int argc, char *argv[])
 {
     FILE *fp;
     int i = 0;
-#ifdef THD
-    unsigned int s = 0;
+#ifdef THREAD
     pthread_t threads[NUM_OF_THREADS];
     thread_data_t thread_data[NUM_OF_THREADS];
+    unsigned int buf_line = 0;
+    unsigned int  thd_index = 0;
+    unsigned int  line_start = 0;
+    void *tret;
+    int j = 0;
 #else
     char line[MAX_LAST_NAME_SIZE];
 #endif
     struct timespec start, end;
     double cpu_time1, cpu_time2;
-
-#ifdef DEBUG
     struct timespec start1, end1;
-    struct timespec start2, end2;
     double cpu_time3;
+#ifdef RUN_TEST
+    struct timespec start2, end2;
 //    double cpu_time4;
+#endif
     clock_gettime(CLOCK_REALTIME, &start1);
-#endif
-
-#ifdef THD
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-#endif
 
     /* check file opening */
     fp = fopen(DICT_FILE, "r");
@@ -102,83 +81,49 @@ int main(int argc, char *argv[])
 #if defined(__GNUC__)
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
 #endif
-#ifdef THD
-    int ss = 0;
-    int dd = 0;
-    void *tret;
-
+#ifdef THREAD
     clock_gettime(CLOCK_REALTIME, &start);
-    while (fgets((char *) &(buf[s]), MAX_LAST_NAME_SIZE, fp)) {
-        while (buf[s][i] != '\0')
+    while (fgets((char *) &(buf[buf_line]), MAX_LAST_NAME_SIZE, fp)) {
+        while (buf[buf_line][i] != '\0')
             i++;
-        buf[s][i - 1] = '\0';
+        buf[buf_line][i - 1] = '\0';
         i = 0;
-        s++;
+        buf_line++;
 
-        if((s % LINE_E) ==0) {
-#if 1
-            if(ss >= NUM_OF_THREADS) {
-                ss=0;
-//                pthread_join(threads[ss], &tret);
-                for (int j = 0; j < NUM_OF_THREADS; j++) {
+        if((buf_line % LINE_H) == 0) {
+            if(thd_index >= NUM_OF_THREADS) {
+                thd_index = 0;
+                for (j = 0; j < NUM_OF_THREADS; j++) {
                     pthread_join(threads[j], &tret);
                 }
             }
-#endif
-            thread_data[ss].start = dd*LINE_E;
-            thread_data[ss].end   = s-1;
-            thread_data[ss].thd   = ss;
-            pthread_create(&threads[ss], NULL, processArray, (void *)&thread_data[ss]);
-            dd++;
-            ss++;
+            thread_data[thd_index].start = line_start * LINE_H;
+            thread_data[thd_index].end   = buf_line - 1;
+            thread_data[thd_index].thd = thd_index;
+            pthread_create(&threads[thd_index], NULL, processArray, (void *)&thread_data[thd_index]);
+            line_start++;
+            thd_index++;
         }
     }
 
-    if((s % LINE_E) !=0) {
-#if 1
-        if(ss>=NUM_OF_THREADS) {
-            ss=0;
-            pthread_join(threads[ss], &tret);
+    if((buf_line % LINE_H) != 0) {
+        if(thd_index >= NUM_OF_THREADS) {
+            thd_index = 0;
+            pthread_join(threads[thd_index], &tret);
         }
-#endif
-        thread_data[ss].start = dd*LINE_E;
-        thread_data[ss].end   = s-1;
-        thread_data[ss].thd   = ss;
-        pthread_create(&threads[ss], NULL, processArray, (void *)&thread_data[ss]);
+        thread_data[thd_index].start = line_start * LINE_H;
+        thread_data[thd_index].end   = buf_line - 1;
+        thread_data[thd_index].thd   = thd_index;
+        pthread_create(&threads[thd_index], NULL, processArray, (void *)&thread_data[thd_index]);
     }
 
-#if 0 /* Evan: TEST */
-    printf("\r\n(%s:%d)---> ss=%d", __FUNCTION__, __LINE__,
-           ss);
-#endif
-//    running_threads = ss;
-#if 0
-    while(running_threads)
-        usleep(10);
-#else
-#if 0
-    pthread_join(threads[ss], &tret);
-#else
-    for (int j = 0; j <= ss; j++) {
+    for (j = 0; j < NUM_OF_THREADS; j++) {
         pthread_join(threads[j], &tret);
-#if 0
-        printf("(%s:%d)---> NUM_OF_THREADS=%d, tret=%d\n", __FUNCTION__, __LINE__,
-               NUM_OF_THREADS,
-               tret);
-#endif
     }
-#endif
-#endif
-
-//    pthread_exit(NULL);
-
-#ifdef DEBUG2
-    printf("\r\n(%s:%d)---------------------------------------------->", __FUNCTION__, __LINE__);
-#endif
 
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time1 = diff_in_second(start, end);
-#else
+#else /* else of THREAD */
     clock_gettime(CLOCK_REALTIME, &start);
     while (fgets(line, sizeof(line), fp)) {
         while (line[i] != '\0')
@@ -189,7 +134,7 @@ int main(int argc, char *argv[])
     }
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time1 = diff_in_second(start, end);
-#endif
+#endif /* end of THREAD */
 
     /* close file as soon as possible */
     fclose(fp);
@@ -199,10 +144,6 @@ int main(int argc, char *argv[])
     /* the givn last name to find */
     char input[MAX_LAST_NAME_SIZE] = "zyxel";
     e = pHead;
-
-#ifdef DEBUG2
-    printf("\r\n(%s:%d)---------------------------------------------->", __FUNCTION__, __LINE__);
-#endif
 
     assert(findName(input, e) &&
            "Did you implement findName() in " IMPL "?");
@@ -221,9 +162,9 @@ int main(int argc, char *argv[])
 #if defined(OPT)
     output = fopen("opt.txt", "a");
 #elif defined(THD2)
-    output = fopen("opt_thd2.txt", "a");
-#elif defined(THD)
-    output = fopen("opt_thd.txt", "a");
+    output = fopen("opt_thread2.txt", "a");
+#elif defined(THREAD)
+    output = fopen("opt_thread1.txt", "a");
 #elif defined(HASH1)
     output = fopen("opt_hash1.txt", "a");
 #elif defined(HASH2)
@@ -234,9 +175,9 @@ int main(int argc, char *argv[])
     fprintf(output, "append() findName() %lf %lf\n", cpu_time1, cpu_time2);
     fclose(output);
 
-#ifdef DEBUG
+#ifdef RUN_TEST
     clock_gettime(CLOCK_REALTIME, &start2);
-    test(pHead);
+    runTest(pHead);
     clock_gettime(CLOCK_REALTIME, &end2);
 //    cpu_time4 = diff_in_second(start2, end2);
 #endif
@@ -251,58 +192,57 @@ int main(int argc, char *argv[])
     freeHashTable();
 #endif
 
-#ifdef DEBUG
     clock_gettime(CLOCK_REALTIME, &end1);
     cpu_time3 = diff_in_second(start1, end1);
     printf("execution time of total : %lf sec\n", cpu_time3);
-#if 0
-    printf("execution time of test() : %lf sec\n", cpu_time4);
-#ifdef THD
-    cpu_time_thd = cpu_time_thd / NUM_OF_THREADS;
-    printf("execution time of pthread : %lf sec\n", cpu_time_thd);
-#endif
-#endif
+#ifdef RUN_TEST
+//    printf("execution time of test() : %lf sec\n", cpu_time4);
 #endif
 
     return 0;
 }
 
-#ifdef THD
+#ifdef RUN_TEST
+void runTest(entry *pHead)
+{
+    int i = 0;
+    char test[9][MAX_LAST_NAME_SIZE] = {
+        "uninvolved",
+        "zyxel",
+        "whiteshank",
+        "odontomous",
+        "pungoteague",
+        "reweighted",
+        "xiphisternal",
+        "aaah",
+        "yakattalo"
+    };
+    for (i = 0; i < 9; i++) {
+        assert(0 == strcmp(findName(test[i], pHead)->lastName, test[i]));
+    }
+}
+#endif
+
+#ifdef THREAD
 void *processArray(void *args)
 {
     thread_data_t *data = (thread_data_t *)args;
-//    char **arr = data->arr;
     int start = data->start;
     int end   = data->end;
     int thd = data->thd;
     int i = 0;
     entry *e = NULL;
 
-#if defined(THD) && defined(DEBUG2)
+#if defined(DEBUG2)
     printf("(%s:%d) ---> pthred_id=0x%lx, start=%d, end=%d, thd=%d\n",__FUNCTION__,__LINE__,
            pthread_self(),
            start,
            end,
            thd);
 #endif
-//    pthread_mutex_lock(& mutex);
-
-    clock_gettime(CLOCK_REALTIME, &start_thd);
     for (i = start; i < end; i++) {
         e = append((char *) & (buf[i]), e, thd);
     }
-
-    clock_gettime(CLOCK_REALTIME, &end_thd);
-    cpu_time_thd += diff_in_second(start_thd, end_thd);
-
-//    pthread_mutex_unlock(& mutex);
-
-#if 0
-    pthread_mutex_lock(& mutex);
-    if(running_threads)
-        running_threads--;
-    pthread_mutex_unlock(& mutex);
-#endif
 
     pthread_exit(NULL);
 }

@@ -91,7 +91,7 @@ int main(void)
     }
     fclose(fp);
 
-    fp = fopen("opt_thd.txt", "r");
+    fp = fopen("opt_thread1.txt", "r");
     if (!fp) {
         fp = fopen("orig.txt", "r");
         if (!fp) {
@@ -113,7 +113,7 @@ int main(void)
     }
     fclose(fp);
 
-    fp = fopen("opt_thd2.txt", "r");
+    fp = fopen("opt_thread2.txt", "r");
     if (!fp) {
         fp = fopen("orig.txt", "r");
         if (!fp) {
