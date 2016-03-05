@@ -15,9 +15,16 @@
 #endif
 
 #ifdef THD
-#define NUM_OF_THREADS 2
+#define MAX_BUFFER_SIZE 400000
+#define LINE_E 10000
 
-extern char buf[400000][MAX_LAST_NAME_SIZE];
+#if 1
+#define NUM_OF_THREADS 4
+#else
+#define NUM_OF_THREADS (MAX_BUFFER_SIZE/LINE_E + 1)
+#endif
+
+extern char buf[MAX_BUFFER_SIZE][MAX_LAST_NAME_SIZE];
 extern pthread_mutex_t mutex;
 
 typedef struct thread_data_s {

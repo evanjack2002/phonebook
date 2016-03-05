@@ -2,10 +2,10 @@ CC ?= gcc
 CFLAGS_common ?= -Wall -std=gnu99 -DDEBUG -g
 CFLAGS_orig = -O0
 CFLAGS_opt  = -O0
-CFLAGS_opt_hash1  = -O0 -DHASH_1
-CFLAGS_opt_hash2  = -O0 -DHASH_2
-CFLAGS_opt_thread  = -O0 -pthread -DHASH_1 -DTHD
-CFLAGS_opt_thread2  = -O0 -pthread -DHASH_2 -DTHD -DTHD2
+CFLAGS_opt_hash1  = -O0 -DHASH_1 -DDEBUG1
+CFLAGS_opt_hash2  = -O0 -DHASH_2 -DDEBUG1
+CFLAGS_opt_thread  = -O0 -pthread -DHASH_1 -DTHD -DDEBUG1
+CFLAGS_opt_thread2  = -O0 -pthread -DHASH_2 -DTHD -DTHD2 -DDEBUG1
 
 EXEC = phonebook_orig phonebook_opt phonebook_opt_hash1 phonebook_opt_hash2 \
 	phonebook_opt_thread phonebook_opt_thread2
@@ -35,6 +35,8 @@ phonebook_opt_hash2: $(SRCS_common) phonebook_opt_hash.c phonebook_opt_hash.h
 	$(CC) $(CFLAGS_common) $(CFLAGS_opt_hash2) \
 		-DIMPL="\"$(SRC_HASH).h\"" -o $@ \
 		$(SRCS_common) $(SRC_HASH).c
+
+thd: phonebook_opt_thread
 
 phonebook_opt_thread: $(SRCS_common) phonebook_opt_hash.c phonebook_opt_hash.h
 	$(CC) $(CFLAGS_common) $(CFLAGS_opt_thread) \
@@ -70,6 +72,12 @@ run6: phonebook_opt_thread2
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	watch -d -t "./phonebook_opt_thread2 && echo 3 | sudo tee /proc/sys/vm/drop_caches"
 
+
+test5:
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
+	perf stat --repeat 100 \
+		-e cache-misses,cache-references,instructions,cycles,branches,branch-misses \
+		./phonebook_opt_thread 1>/dev/null
 
 cache-test: $(EXEC)
 	@rm -f *.txt
