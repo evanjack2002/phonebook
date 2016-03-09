@@ -62,7 +62,7 @@ void initHashTable(unsigned int bucket_size, unsigned int pool_size)
 #if defined(USE_MEM_POOL)
         for (j = 0; j < bucket_size; j++) {
             (hashTable.bucket[i] + j)->pool = (entry *)malloc(sizeof(entry) * hashTable.poolSize);
-            (hashTable.bucket[i] + j)->pool_count = 0;
+            (hashTable.bucket[i] + j)->entry_count = 0;
         }
 #endif
     }
@@ -102,7 +102,7 @@ entry *findName(char lastName[], entry *e)
     for (i = 0; i < NUM_OF_THREADS; i++) {
         hash = hashTable.bucket[i] + key;
         j = 0;
-        while (j <= hash->pool_count) {
+        while (j <= hash->entry_count) {
             if (strcasecmp(lastName, (hash->pool + j)->lastName) == 0) {
                 return (hash->pool + j);
             }
@@ -134,7 +134,7 @@ entry *append(char lastName[], entry *e, int thd)
 
 #if defined(USE_MEM_POOL)
 #ifdef DEBUG
-    if (hash->pool_count == 0) {
+    if (hash->entry_count == 0) {
 //        pthread_mutex_lock(& mutex);
         hashTable.activeBuckets[thd]++;
         if (hashTable.activeBuckets[thd] > HASH_TABLE_BUCKET)
@@ -146,10 +146,10 @@ entry *append(char lastName[], entry *e, int thd)
 //        pthread_mutex_unlock(& mutex);
     }
 #endif
-    strcpy((hash->pool + (hash->pool_count))->lastName, lastName);
-    e = (hash->pool + (hash->pool_count));
-    hash->pool_count++;
-    assert(hash->pool_count <= MAX_MEM_POOL_SIZE);
+    strcpy((hash->pool + (hash->entry_count))->lastName, lastName);
+    e = (hash->pool + (hash->entry_count));
+    hash->entry_count++;
+    assert(hash->entry_count <= MAX_MEM_POOL_SIZE);
     return e;
 #else
     e = (entry *) malloc(sizeof(entry));
@@ -195,7 +195,7 @@ void initHashTable(unsigned int bucket_size, unsigned int pool_size)
 #if defined(USE_MEM_POOL)
     for (i = 0; i < bucket_size; i++) {
         (hashTable.bucket + i)->pool = (entry *)malloc(sizeof(entry) * hashTable.poolSize);
-        (hashTable.bucket + i)->pool_count = 0;
+        (hashTable.bucket + i)->entry_count = 0;
     }
 #endif
 
@@ -230,7 +230,7 @@ entry *findName(char lastName[], entry *e)
 
 #if defined(USE_MEM_POOL)
     unsigned int i = 0;
-    while (i <= hash->pool_count) {
+    while (i <= hash->entry_count) {
         if (strcasecmp(lastName, (hash->pool + i)->lastName) == 0) {
             return (hash->pool + i);
         }
@@ -258,15 +258,15 @@ entry *append(char lastName[], entry *e)
 
 #if defined(USE_MEM_POOL)
 #ifdef DEBUG
-    if (hash->pool_count == 0) {
+    if (hash->entry_count == 0) {
         hashTable.activeBuckets++;
         assert(hashTable.activeBuckets <= HASH_TABLE_BUCKET);
     }
 #endif
-    strcpy((hash->pool + (hash->pool_count))->lastName, lastName);
-    e = (hash->pool + (hash->pool_count));
-    hash->pool_count++;
-    assert(hash->pool_count <= MAX_MEM_POOL_SIZE);
+    strcpy((hash->pool + (hash->entry_count))->lastName, lastName);
+    e = (hash->pool + (hash->entry_count));
+    hash->entry_count++;
+    assert(hash->entry_count <= MAX_MEM_POOL_SIZE);
     return e;
 #else
     e = (entry *) malloc(sizeof(entry));

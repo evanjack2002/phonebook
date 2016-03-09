@@ -21,11 +21,7 @@
 
 #ifdef THREAD
 
-#if 0
-#define NUM_OF_THREADS 4
-#else
-#define NUM_OF_THREADS (MAX_BUFFER_SIZE/LINE_H + 1)
-#endif
+#define NUM_OF_THREADS ((MAX_BUFFER_SIZE / LINE_H) + 1)
 #define HASH_TABLE_BUCKET ((BUCKET_UNIT / NUM_OF_THREADS) + 1)
 #define MAX_BUFFER_SIZE 400000
 #define LINE_H 10000
@@ -61,11 +57,10 @@ typedef struct __PHONE_BOOK_ENTRY {
 typedef struct hashEntry_s {
 #if defined(USE_MEM_POOL)
     entry *pool;
-    unsigned int pool_count;
+    unsigned int entry_count;
 #else
     entry *pHead;
     entry *pTail;
-
 #ifdef DEBUG
     unsigned int slot;
 #endif

@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
     struct timespec start2, end2;
     double cpu_time4;
 #endif
+
     clock_gettime(CLOCK_REALTIME, &start1);
 
     /* check file opening */
@@ -105,13 +106,6 @@ int main(int argc, char *argv[])
         buf_line++;
 
         if ((buf_line % LINE_H) == 0) {
-            if (thd_index >= NUM_OF_THREADS) {
-                thd_index = 0;
-                for (j = 0; j < NUM_OF_THREADS; j++) {
-                    if(threads[j])
-                        pthread_join(threads[j], &tret);
-                }
-            }
             thread_data[thd_index].start = line_start * LINE_H;
             thread_data[thd_index].end   = buf_line - 1;
             thread_data[thd_index].thd = thd_index;
@@ -210,7 +204,7 @@ int main(int argc, char *argv[])
 
     clock_gettime(CLOCK_REALTIME, &end1);
     cpu_time3 = diff_in_second(start1, end1);
-    printf("execution time of total : %lf sec\n", cpu_time3);
+    printf("execution time of process life : %lf sec\n", cpu_time3);
 #ifdef RUN_TEST
     printf("execution time of test() : %lf sec\n", cpu_time4);
 #endif
