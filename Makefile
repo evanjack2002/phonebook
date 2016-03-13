@@ -1,5 +1,5 @@
 CC ?= gcc
-CFLAGS_common ?= -Wall -std=gnu99 -DRUN_TEST
+CFLAGS_common ?= -Wall -std=gnu99 -g -DRUN_TEST
 CFLAGS_orig = -O0
 CFLAGS_opt  = -O0 $(CFLAGS_pool)
 CFLAGS_opt_hash1  = $(CFLAGS_opt) -DHASH_1
