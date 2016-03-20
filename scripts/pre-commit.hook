@@ -26,6 +26,7 @@ for FILE in $FILES; do
     if [ $r != 0 ] ; then
         echo "[!] $FILE does not follow the consistent coding style." >&2
         RETURN=1
+        break
     fi
 done
 
