@@ -19,6 +19,7 @@ void runTest(entry *pHead);
 
 #ifdef THREAD
 char buf[MAX_BUFFER_SIZE][MAX_LAST_NAME_SIZE];
+unsigned int total_thread_used = 0;
 void *processArray(void * args);
 #endif
 
@@ -43,7 +44,6 @@ int main(int argc, char *argv[])
     pthread_t threads[NUM_OF_THREADS];
     thread_data_t thread_data[NUM_OF_THREADS];
     unsigned int buf_line = 0;
-    unsigned int  thd_index = 0;
     unsigned int  line_start = 0;
     void *tret;
     int j = 0;
@@ -105,29 +105,25 @@ int main(int argc, char *argv[])
         buf_line++;
 
         if ((buf_line % LINE_H) == 0) {
-            thread_data[thd_index].start = line_start * LINE_H;
-            thread_data[thd_index].end   = buf_line - 1;
-            thread_data[thd_index].thd = thd_index;
-            pthread_create(&threads[thd_index], NULL, processArray, (void *)&thread_data[thd_index]);
+            thread_data[total_thread_used].start = line_start * LINE_H;
+            thread_data[total_thread_used].end   = buf_line - 1;
+            thread_data[total_thread_used].thd = total_thread_used;
+            pthread_create(&threads[total_thread_used], NULL, processArray, (void *)&thread_data[total_thread_used]);
             line_start++;
-            thd_index++;
+            total_thread_used++;
         }
+        assert (total_thread_used < NUM_OF_THREADS);
     }
 
     if ((buf_line % LINE_H) != 0) {
-        if (thd_index >= NUM_OF_THREADS) {
-            thd_index = 0;
-            pthread_join(threads[thd_index], &tret);
-        }
-        thread_data[thd_index].start = line_start * LINE_H;
-        thread_data[thd_index].end   = buf_line - 1;
-        thread_data[thd_index].thd   = thd_index;
-        pthread_create(&threads[thd_index], NULL, processArray, (void *)&thread_data[thd_index]);
+        thread_data[total_thread_used].start = line_start * LINE_H;
+        thread_data[total_thread_used].end   = buf_line - 1;
+        thread_data[total_thread_used].thd   = total_thread_used;
+        pthread_create(&threads[total_thread_used], NULL, processArray, (void *)&thread_data[total_thread_used]);
     }
 
-    for (j = 0; j < NUM_OF_THREADS; j++) {
-        if(threads[j])
-            pthread_join(threads[j], &tret);
+    for (j = 0; j <= total_thread_used; j++) {
+        pthread_join(threads[j], &tret);
     }
 
     clock_gettime(CLOCK_REALTIME, &end);

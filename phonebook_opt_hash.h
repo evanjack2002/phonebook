@@ -25,6 +25,7 @@
 #define HASH_TABLE_BUCKET ((BUCKET_UNIT / NUM_OF_THREADS) + 1)
 #define MAX_BUFFER_SIZE 400000
 #define LINE_H 10000
+extern unsigned int total_thread_used;
 
 #else /* else of THREAD */
 

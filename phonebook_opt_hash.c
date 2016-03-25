@@ -99,7 +99,7 @@ entry *findName(char lastName[], entry *e)
 
 
 #if defined(USE_MEM_POOL)
-    for (i = 0; i < NUM_OF_THREADS; i++) {
+    for (i = 0; i <= total_thread_used; i++) {
         hash = hashTable.bucket[i] + key;
         j = 0;
         while (j <= hash->pool_count) {
@@ -110,7 +110,7 @@ entry *findName(char lastName[], entry *e)
         }
     }
 #else
-    for (i = 0; i < NUM_OF_THREADS; i++) {
+    for (i = 0; i <= total_thread_used; i++) {
         hash = &hashTable.bucket[i][key];
         e = hash->pHead;
         while (e != NULL) {
